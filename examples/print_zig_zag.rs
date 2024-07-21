@@ -1,4 +1,4 @@
-use protobin::WireVarInt;
+use protobin::wire::*;
 
 fn main() {
     let values = [2, 1, 0, -1, -2];

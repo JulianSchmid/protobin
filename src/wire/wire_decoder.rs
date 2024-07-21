@@ -1,30 +1,25 @@
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum DecodeError {
-    Len,
-    UnexpectedContinuationBit,
-}
+use crate::decode::*;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct ProtoBufDecoder<'a> {
+pub struct WireDecoder<'a> {
     pub data: &'a [u8],
 }
 
-impl<'a> ProtoBufDecoder<'a> {
-    pub fn new(data: &[u8]) -> ProtoBufDecoder {
-        ProtoBufDecoder { data }
+impl<'a> WireDecoder<'a> {
+    pub fn new(data: &[u8]) -> WireDecoder {
+        WireDecoder { data }
     }
 
     /// Read a VARINT uint32 from the `data` slice and move `data`
     /// by the amount of read bytes.
     pub fn read_var_uint32(&mut self) -> Result<u32, DecodeError> {
         let mut result = 0u32;
-        for _ in 0..5 {
+        for i in 0..5 {
             let v = self.take_byte()?;
-            result |= (v & 0b0111_1111) as u32;
+            result |= ((v & 0b0111_1111) as u32) << (7 * i);
             if v & 0b1000_0000 == 0 {
                 return Ok(result);
             }
-            result = result << 7;
         }
         Err(DecodeError::UnexpectedContinuationBit)
     }
@@ -33,13 +28,12 @@ impl<'a> ProtoBufDecoder<'a> {
     /// by the amount of read bytes.
     pub fn read_var_uint64(&mut self) -> Result<u64, DecodeError> {
         let mut result = 0u64;
-        for _ in 0..10 {
+        for i in 0..10 {
             let v = self.take_byte()?;
-            result |= (v & 0b0111_1111) as u64;
+            result |= ((v & 0b0111_1111) as u64) << (7 * i);
             if v & 0b1000_0000 == 0 {
                 return Ok(result);
             }
-            result = result << 7;
         }
         Err(DecodeError::UnexpectedContinuationBit)
     }
@@ -69,7 +63,7 @@ impl<'a> ProtoBufDecoder<'a> {
     }
 
     #[inline]
-    fn take_byte(&mut self) -> Result<u8, DecodeError> {
+    pub fn take_byte(&mut self) -> Result<u8, DecodeError> {
         if self.data.is_empty() {
             Err(DecodeError::Len)
         } else {
@@ -82,7 +76,7 @@ impl<'a> ProtoBufDecoder<'a> {
     }
 
     #[inline]
-    fn take_4bytes(&mut self) -> Result<[u8; 4], DecodeError> {
+    pub fn take_4bytes(&mut self) -> Result<[u8; 4], DecodeError> {
         if self.data.len() < 4 {
             Err(DecodeError::Len)
         } else {
@@ -102,7 +96,7 @@ impl<'a> ProtoBufDecoder<'a> {
     }
 
     #[inline]
-    fn take_8bytes(&mut self) -> Result<[u8; 8], DecodeError> {
+    pub fn take_8bytes(&mut self) -> Result<[u8; 8], DecodeError> {
         if self.data.len() < 8 {
             Err(DecodeError::Len)
         } else {
@@ -124,20 +118,35 @@ impl<'a> ProtoBufDecoder<'a> {
             Ok(result)
         }
     }
+
+    #[inline]
+    pub fn take_nbyte(&mut self, n: usize) -> Result<&'a [u8], DecodeError> {
+        if self.data.len() < n {
+            Err(DecodeError::Len)
+        } else {
+            let result = unsafe {
+                core::slice::from_raw_parts(self.data.as_ptr(), n)
+            };
+            self.data = unsafe {
+                core::slice::from_raw_parts(self.data.as_ptr().add(n), self.data.len() - n)
+            };
+            Ok(result)
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::wire::*;
     use proptest::prelude::*;
 
     proptest! {
         #[test]
         fn test_var_u32(value in any::<u32>()) {
-            let mut writer = ProtobufEncoder::new();
+            let mut writer = WireEncoder::new();
             writer.add_var_uint32(value);
             let buf = writer.take_buf();
-            let mut reader = ProtoBufDecoder::new(&buf);
+            let mut reader = WireDecoder::new(&buf);
             prop_assert_eq!(Ok(value), reader.read_var_uint32());
         }
     }
@@ -145,10 +154,10 @@ mod tests {
     proptest! {
         #[test]
         fn test_var_u64(value in any::<u64>()) {
-            let mut writer = ProtobufEncoder::new();
+            let mut writer = WireEncoder::new();
             writer.add_var_uint64(value);
             let buf = writer.take_buf();
-            let mut reader = ProtoBufDecoder::new(&buf);
+            let mut reader = WireDecoder::new(&buf);
             prop_assert_eq!(Ok(value), reader.read_var_uint64());
         }
     }
@@ -156,10 +165,10 @@ mod tests {
     proptest! {
         #[test]
         fn test_fixed32(value in any::<u32>()) {
-            let mut writer = ProtobufEncoder::new();
+            let mut writer = WireEncoder::new();
             writer.add_fixed32(value);
             let buf = writer.take_buf();
-            let mut reader = ProtoBufDecoder::new(&buf);
+            let mut reader = WireDecoder::new(&buf);
             prop_assert_eq!(Ok(value), reader.read_fixed32());
         }
     }
@@ -167,10 +176,10 @@ mod tests {
     proptest! {
         #[test]
         fn test_fixed64(value in any::<u64>()) {
-            let mut writer = ProtobufEncoder::new();
+            let mut writer = WireEncoder::new();
             writer.add_fixed64(value);
             let buf = writer.take_buf();
-            let mut reader = ProtoBufDecoder::new(&buf);
+            let mut reader = WireDecoder::new(&buf);
             prop_assert_eq!(Ok(value), reader.read_fixed64());
         }
     }
@@ -178,10 +187,10 @@ mod tests {
     proptest! {
         #[test]
         fn test_read_float(value in any::<f32>()) {
-            let mut writer = ProtobufEncoder::new();
+            let mut writer = WireEncoder::new();
             writer.add_float(value);
             let buf = writer.take_buf();
-            let mut reader = ProtoBufDecoder::new(&buf);
+            let mut reader = WireDecoder::new(&buf);
             prop_assert_eq!(Ok(value), reader.read_float());
         }
     }
@@ -189,10 +198,10 @@ mod tests {
     proptest! {
         #[test]
         fn test_read_double(value in any::<f64>()) {
-            let mut writer = ProtobufEncoder::new();
+            let mut writer = WireEncoder::new();
             writer.add_double(value);
             let buf = writer.take_buf();
-            let mut reader = ProtoBufDecoder::new(&buf);
+            let mut reader = WireDecoder::new(&buf);
             prop_assert_eq!(Ok(value), reader.read_double());
         }
     }

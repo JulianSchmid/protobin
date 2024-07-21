@@ -1,4 +1,4 @@
-use crate::*;
+use crate::wire::*;
 
 /// A "on the wire" protobuf value reference that can be furhter
 /// interpreted into a "proto type" based on it's definition.

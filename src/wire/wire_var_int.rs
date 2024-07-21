@@ -1,3 +1,5 @@
+use crate::*;
+
 /// Variable sized integer Protobuf wire value used to
 /// encode the Protobuf types `int32`, `int64`, `uint32`,
 /// `uint64`, `sint32`, `sint64`, `bool` and `enum`.
@@ -131,11 +133,112 @@ impl WireVarInt {
     pub fn as_sint64(&self) -> i64 {
         (self.0 >> 1) as i64 ^ -((self.0 & 1) as i64)
     }
+
+    /// Returns the byte len of a encoded "tag" with the
+    /// passed field number.
+    /// 
+    /// Tag is the value written before a message field
+    /// value is written.
+    pub fn tag_byte_len(field_number: FieldNumber) -> i32 {
+        if field_number.0 < (1 << (7 - 3)) {
+            1
+        } else if field_number.0 < (1 << ((7 * 2) - 3)) {
+            2
+        } else if field_number.0 < (1 << ((7 * 3) - 3)) {
+            3
+        } else if field_number.0 < (1 << ((7 * 4) - 3)) {
+            4
+        } else {
+            5
+        }
+    }
+
+    fn varint32_len(value: u32) -> i32 {
+        if value < (1 << 7) {
+            1
+        } else if value < (1 << (7 * 2)) {
+            2
+        } else if value < (1 << (7 * 3)) {
+            3
+        } else if value < (1 << (7 * 4)) {
+            4
+        } else {
+            5
+        }
+    }
+    
+    fn varint64_len(value: u64) -> i32 {
+        if value < (1 << 7) {
+            1
+        } else if value < (1 << (7 * 2)) {
+            2
+        } else if value < (1 << (7 * 3)) {
+            3
+        } else if value < (1 << (7 * 4)) {
+            4
+        } else if value < (1 << (7 * 5)) {
+            5
+        } else if value < (1 << (7 * 6)) {
+            6
+        } else if value < (1 << (7 * 7)) {
+            7
+        } else if value < (1 << (7 * 8)) {
+            8
+        } else if value < (1 << (7 * 9)) {
+            9
+        } else {
+            10
+        }
+    }
+    
+    /// Returns the encoded byte len of a "int32" encoded
+    /// as varint (encoded using two’s complements).
+    #[inline]
+    pub fn int32_byte_len(value: i32) -> i32 {
+        Self::varint32_len(u32::from_ne_bytes(value.to_ne_bytes()))
+    }
+
+    /// Returns the encoded byte len of a "int64" encoded
+    /// as varint (encoded using two’s complements).
+    #[inline]
+    pub fn int64_byte_len(value: i64) -> i32 {
+        Self::varint64_len(u64::from_ne_bytes(value.to_ne_bytes()))
+    }
+
+    /// Returns the encoded byte len of a "uint32" encoded
+    /// as varint.
+    #[inline]
+    pub fn uint32_byte_len(value: u32) -> i32 {
+        Self::varint32_len(value)
+    }
+
+    /// Returns the encoded byte len of a "uint64" encoded
+    /// as varint.
+    #[inline]
+    pub fn uint64_byte_len(value: u64) -> i32 {
+        Self::varint64_len(value)
+    }
+
+    /// Returns the encoded byte len of a "sint32" encoded
+    /// as varint (encoded using zig zag).
+    #[inline]
+    pub fn sint32_byte_len(value: i32) -> i32 {
+        let zigzag = (value << 1) ^ (value >> 31);
+        Self::varint32_len(u32::from_le_bytes(zigzag.to_ne_bytes()))
+    }
+
+    /// Returns the encoded byte len of a "sint64" encoded
+    /// as varint (encoded using zig zag).
+    #[inline]
+    pub fn sint64_byte_len(value: i64) -> i32 {
+        let zigzag = (value << 1) ^ (value >> 63);
+        Self::varint64_len(u64::from_ne_bytes(zigzag.to_ne_bytes()))
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::wire::*;
     use proptest::prelude::*;
 
     proptest! {

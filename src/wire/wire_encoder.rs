@@ -1,21 +1,21 @@
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct ProtobufEncoder {
+pub struct WireEncoder {
     /// Buffer where the encoded bytes will be written to.
     pub buf: Vec<u8>,
 }
 
-impl ProtobufEncoder {
+impl WireEncoder {
     /// Create a [`ProtobufEncoder`] with a new `Vec`.
-    pub fn new() -> ProtobufEncoder {
-        ProtobufEncoder { buf: Vec::new() }
+    pub fn new() -> WireEncoder {
+        WireEncoder { buf: Vec::new() }
     }
 
     /// Create a [`ProtobufEncoder`] with the given buffer.
-    pub fn with_buf(buf: Vec<u8>) -> ProtobufEncoder {
-        ProtobufEncoder { buf }
+    pub fn with_buf(buf: Vec<u8>) -> WireEncoder {
+        WireEncoder { buf }
     }
 
-    /// Add the given [`u32`] as VARINT uint16 to the `buf`.
+    /// Add the given [`u32`] as VARINT to the `buf`.
     pub fn add_var_uint32(&mut self, value: u32) {
         // determine needed byte length
         if value < (1 << 7) {
@@ -24,37 +24,37 @@ impl ProtobufEncoder {
         } else if value < (1 << (7 * 2)) {
             // 2 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | (value >> 7) as u8,
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | (value as u8),
+                (value >> 7) as u8,
             ]);
         } else if value < (1 << (7 * 3)) {
             // 3 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                ((value >> (7 * 2)) as u8),
             ]);
         } else if value < (1 << (7 * 4)) {
             // 4 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                ((value >> (7 * 3)) as u8),
             ]);
         } else {
             // 5 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 4)) as u8),
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | ((value >> (7 * 3)) as u8),
+                ((value >> (7 * 4)) as u8),
             ]);
         }
     }
 
-    /// Add the given [`u64`] as VARINT uint16 to the `buf`.
+    /// Add the given [`u64`] as VARINT to the `buf`.
     pub fn add_var_uint64(&mut self, value: u64) {
         // determine needed byte length
         if value < (1 << 7) {
@@ -63,92 +63,92 @@ impl ProtobufEncoder {
         } else if value < (1 << (7 * 2)) {
             // 2 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | (value >> 7) as u8,
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | (value as u8),
+                (value >> 7) as u8,
             ]);
         } else if value < (1 << (7 * 3)) {
             // 3 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                ((value >> (7 * 2)) as u8),
             ]);
         } else if value < (1 << (7 * 4)) {
             // 4 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                ((value >> (7 * 3)) as u8),
             ]);
         } else if value < (1 << (7 * 5)) {
             // 5 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 4)) as u8),
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | ((value >> (7 * 3)) as u8),
+                ((value >> (7 * 4)) as u8),
             ]);
         } else if value < (1 << (7 * 6)) {
             // 6 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 5)) as u8),
-                0b1000_0000 | ((value >> (7 * 4)) as u8),
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | ((value >> (7 * 3)) as u8),
+                0b1000_0000 | ((value >> (7 * 4)) as u8),
+                ((value >> (7 * 5)) as u8),
             ]);
         } else if value < (1 << (7 * 7)) {
             // 7 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 6)) as u8),
-                0b1000_0000 | ((value >> (7 * 5)) as u8),
-                0b1000_0000 | ((value >> (7 * 4)) as u8),
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8 & 0b0111_1111),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | ((value >> (7 * 3)) as u8),
+                0b1000_0000 | ((value >> (7 * 4)) as u8),
+                0b1000_0000 | ((value >> (7 * 5)) as u8),
+                ((value >> (7 * 6)) as u8),
             ]);
         } else if value < (1 << (7 * 8)) {
             // 8 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 7)) as u8),
-                0b1000_0000 | ((value >> (7 * 6)) as u8),
-                0b1000_0000 | ((value >> (7 * 5)) as u8),
-                0b1000_0000 | ((value >> (7 * 4)) as u8),
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | ((value >> (7 * 3)) as u8),
+                0b1000_0000 | ((value >> (7 * 4)) as u8),
+                0b1000_0000 | ((value >> (7 * 5)) as u8),
+                0b1000_0000 | ((value >> (7 * 6)) as u8),
+                ((value >> (7 * 7)) as u8),
             ]);
         } else if value < (1 << (7 * 9)) {
             // 9 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 8)) as u8),
-                0b1000_0000 | ((value >> (7 * 7)) as u8),
-                0b1000_0000 | ((value >> (7 * 6)) as u8),
-                0b1000_0000 | ((value >> (7 * 5)) as u8),
-                0b1000_0000 | ((value >> (7 * 4)) as u8),
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | ((value >> (7 * 3)) as u8),
+                0b1000_0000 | ((value >> (7 * 4)) as u8),
+                0b1000_0000 | ((value >> (7 * 5)) as u8),
+                0b1000_0000 | ((value >> (7 * 6)) as u8),
+                0b1000_0000 | ((value >> (7 * 7)) as u8),
+                ((value >> (7 * 8)) as u8),
             ]);
         } else {
             // 1 bytes
             self.buf.extend_from_slice(&[
-                0b1000_0000 | ((value >> (7 * 9)) as u8),
-                0b1000_0000 | ((value >> (7 * 8)) as u8),
-                0b1000_0000 | ((value >> (7 * 7)) as u8),
-                0b1000_0000 | ((value >> (7 * 6)) as u8),
-                0b1000_0000 | ((value >> (7 * 5)) as u8),
-                0b1000_0000 | ((value >> (7 * 4)) as u8),
-                0b1000_0000 | ((value >> (7 * 3)) as u8),
-                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
-                (value as u8 & 0b0111_1111),
+                0b1000_0000 | ((value >> (7 * 2)) as u8),
+                0b1000_0000 | ((value >> (7 * 3)) as u8),
+                0b1000_0000 | ((value >> (7 * 4)) as u8),
+                0b1000_0000 | ((value >> (7 * 5)) as u8),
+                0b1000_0000 | ((value >> (7 * 6)) as u8),
+                0b1000_0000 | ((value >> (7 * 7)) as u8),
+                0b1000_0000 | ((value >> (7 * 8)) as u8),
+                ((value >> (7 * 9)) as u8),
             ]);
         }
     }

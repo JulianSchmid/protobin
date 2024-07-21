@@ -25,7 +25,7 @@ impl WireI32 {
 
 #[cfg(test)]
 mod test {
-    use crate::*;
+    use crate::wire::*;
     use proptest::prelude::*;
 
     proptest! {
