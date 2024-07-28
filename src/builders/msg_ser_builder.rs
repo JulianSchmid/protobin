@@ -1,4 +1,4 @@
-use crate::{*, builders::*, wire::WireVarInt};
+use crate::{*, builders::*};
 
 /// Helper to determine serialize a message after all
 /// lengths have been determined.
@@ -17,13 +17,13 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_int32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.add_varint_tag(field_number);
-        self.buf.encoder.add_var_uint32(u32::from_ne_bytes(value.to_ne_bytes()));
+        self.buf.encoder.add_var_int32(value);
         self
     }
 
     pub fn add_int64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.add_varint_tag(field_number);
-        self.buf.encoder.add_var_uint64(u64::from_ne_bytes(value.to_ne_bytes()));
+        self.buf.encoder.add_var_int64(value);
         self
     }
 
@@ -41,7 +41,7 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_bool_field(&mut self, field_number: FieldNumber, value: bool) -> &mut Self {
         self.add_varint_tag(field_number);
-        self.buf.encoder.add_var_uint32(if value { 1 } else { 0 });
+        self.buf.encoder.add_bool(value);
         self
     }
 
@@ -53,15 +53,13 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_sint32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.add_varint_tag(field_number);
-        let zigzag = (value << 1) ^ (value >> 31);
-        self.buf.encoder.add_var_uint32(u32::from_le_bytes(zigzag.to_ne_bytes()));
+        self.buf.encoder.add_var_sint32(value);
         self
     }
 
     pub fn add_sint64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.add_varint_tag(field_number);
-        let zigzag = (value << 1) ^ (value >> 63);
-        self.buf.encoder.add_var_uint64(u64::from_le_bytes(zigzag.to_ne_bytes()));
+        self.buf.encoder.add_var_sint64(value);
         self
     }
 
@@ -73,7 +71,7 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_sfixed32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 5);
-        self.buf.encoder.add_fixed32(u32::from_ne_bytes(value.to_ne_bytes()));
+        self.buf.encoder.add_sfixed32(value);
         self
     }
 
@@ -91,7 +89,7 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_sfixed64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 1);
-        self.buf.encoder.add_fixed64(u64::from_ne_bytes(value.to_ne_bytes()));
+        self.buf.encoder.add_sfixed64(value);
         self
     }
 

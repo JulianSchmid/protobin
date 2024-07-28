@@ -54,6 +54,19 @@ impl WireEncoder {
         }
     }
 
+    /// Add a protobuf `int32` to the `buf` encoded as VARINT.
+    #[inline]
+    pub fn add_var_int32(&mut self, value: i32) {
+        self.add_var_uint32(u32::from_ne_bytes(value.to_ne_bytes()))
+    }
+
+    /// Add a protobuf `sint32` to the `buf` encoded as VARINT with zig zag encoding.
+    #[inline]
+    pub fn add_var_sint32(&mut self, value: i32) {
+        let zigzag = (value << 1) ^ (value >> 31);
+        self.add_var_uint32(u32::from_ne_bytes(zigzag.to_ne_bytes()))
+    }
+
     /// Add the given [`u64`] as VARINT to the `buf`.
     pub fn add_var_uint64(&mut self, value: u64) {
         // determine needed byte length
@@ -137,7 +150,7 @@ impl WireEncoder {
                 ((value >> (7 * 8)) as u8),
             ]);
         } else {
-            // 1 bytes
+            // 10 bytes
             self.buf.extend_from_slice(&[
                 0b1000_0000 | (value as u8),
                 0b1000_0000 | ((value >> 7) as u8),
@@ -153,28 +166,64 @@ impl WireEncoder {
         }
     }
 
-    /// Add the given [`u32`] as fixed32 to the `buf`.
+    /// Add a protobuf `int64` to the `buf` encoded as VARINT.
+    #[inline]
+    pub fn add_var_int64(&mut self, value: i64) {
+        self.add_var_uint64(u64::from_ne_bytes(value.to_ne_bytes()))
+    }
+
+    /// Add a protobuf `sint64` to the `buf` encoded as VARINT with zig zag encoding.
+    #[inline]
+    pub fn add_var_sint64(&mut self, value: i64) {
+        let zigzag = (value << 1) ^ (value >> 63);
+        self.add_var_uint64(u64::from_ne_bytes(zigzag.to_ne_bytes()))
+    }
+
+    /// Add a protobuf `bool` to the `buf` encoded as VARINT.
+    #[inline]
+    pub fn add_bool(&mut self, value: bool) {
+        self.buf.push(if value { 1 } else { 0 });
+    }
+
+    /// Add the given [`u32`] as `fixed32`` to the `buf`.
+    #[inline]
     pub fn add_fixed32(&mut self, value: u32) {
         self.buf.extend_from_slice(&value.to_le_bytes());
     }
 
+    /// Add the given [`i32`] as `sfixed32`` to the `buf`.
+    #[inline]
+    pub fn add_sfixed32(&mut self, value: i32) {
+        self.buf.extend_from_slice(&value.to_le_bytes());
+    }
+
     /// Add the given [`u64`] as fixed64 to the `buf`.
+    #[inline]
     pub fn add_fixed64(&mut self, value: u64) {
         self.buf.extend_from_slice(&value.to_le_bytes());
     }
 
+    /// Add the given [`i64`] as sfixed64 to the `buf`.
+    #[inline]
+    pub fn add_sfixed64(&mut self, value: i64) {
+        self.buf.extend_from_slice(&value.to_le_bytes());
+    }
+
     /// Add the given [`f32`] as float to the `buf`.
+    #[inline]
     pub fn add_float(&mut self, value: f32) {
         self.buf.extend_from_slice(&value.to_le_bytes());
     }
 
     /// Add the given [`f64`] as double to the `buf`.
+    #[inline]
     pub fn add_double(&mut self, value: f64) {
         self.buf.extend_from_slice(&value.to_le_bytes());
     }
 
     /// Destroys the [`ProtobufEncoder`] and returns the `buf` of the destroyed
     /// [`ProtobufEncoder`].
+    #[inline]
     pub fn take_buf(self) -> Vec<u8> {
         self.buf
     }

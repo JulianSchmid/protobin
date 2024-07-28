@@ -24,7 +24,7 @@ use crate::{builders::*, wire::*, FieldNumber};
 /// 
 /// To avoid this all the length values are determined first and safed so they
 /// can be used in the second serialisation step.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct MsgBuilder {
     pub(crate) lens: Vec<(FieldNumber,i32)>,
     pub(crate) len_stack: Vec<LenStackEntry>,
@@ -32,6 +32,12 @@ pub struct MsgBuilder {
 }
 
 impl MsgBuilder {
+
+    /// Setup a new [`MsgBuilder`].
+    pub fn new() -> MsgBuilder {
+        Default::default()
+    }
+
     /// Start encoding a new message encoding (returns length builder as step 1).
     pub fn start<'a>(&'a mut self, num_len_values: Option<usize>) -> MsgLenBuilder<'a> {
         // clear all previous data
