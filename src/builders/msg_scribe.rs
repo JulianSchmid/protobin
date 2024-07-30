@@ -29,7 +29,7 @@ pub trait MsgScribe {
     fn start_msg(&mut self, field_number: FieldNumber) -> &mut Self;
     fn end_msg(&mut self, field_number: FieldNumber) -> &mut Self;
 
-    fn start_packed<'a>(&'a mut self, field_number: FieldNumber) -> Self::Packed<'a>;
+    fn start_packed(&mut self, field_number: FieldNumber) -> Self::Packed<'_>;
     fn end_packed(&mut self, field_number: FieldNumber) -> &mut Self;
 
     fn end(self) -> Self::End;

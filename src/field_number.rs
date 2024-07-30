@@ -33,7 +33,7 @@ impl FieldNumber {
     /// Convert an [`u32`] to a field number without checking it is smaller
     /// or equal [`FieldNumber::MAX_ALLOWED_U32`] and at least `1`.
     /// 
-    /// # Safety:
+    /// # Safety
     /// 
     /// The caller must ensure the provided value is smaller or equal
     /// [`FieldNumber::MAX_ALLOWED_U32`] and at least `1`. If not undefined
@@ -59,7 +59,7 @@ impl FieldNumber {
     #[inline]
     pub const fn get_next_unreserved(&self) -> FieldNumber {
         assert!(self.0 <= FieldNumber::MAX_ALLOWED_U32);
-        if 19000 <= self.0 + 1 && self.0 + 1 <= 19999 {
+        if 19000 <= self.0 + 1 && self.0 < 19999 {
             // According to https://protobuf.dev/programming-guides/proto3/#assigning
             // 19000 till 19999 are reserved, jump after these
             FieldNumber(20000)

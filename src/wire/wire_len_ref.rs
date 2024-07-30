@@ -12,16 +12,16 @@ pub struct WireLenRef<'a> {
 impl<'a> WireLenRef<'a> {
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        &self.data
+        self.data
     }
 
     #[inline]
     pub fn try_as_string(&self) -> Result<&str, Utf8Error> {
-        core::str::from_utf8(&self.data)
+        core::str::from_utf8(self.data)
     }
 
     #[inline]
     pub fn as_sub_msg(&self) -> MsgDecoder<'a> {
-        MsgDecoder { wire_decoder: WireDecoder { data: &self.data } }
+        MsgDecoder { wire_decoder: WireDecoder { data: self.data } }
     }
 }

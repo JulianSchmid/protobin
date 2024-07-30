@@ -2,6 +2,12 @@
 name = "protobin"
 version = "0.1.0"
 edition = "2021"
+authors = ["Julian Schmid <info@julianschmid.name>"]
+repository = "https://github.com/JulianSchmid/protobin"
+description = "A rust crate with basic functions to encode & decode Protocol Buffer binary messages."
+keywords = ["protobuf", "serialization"]
+categories = ["encoding"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 
