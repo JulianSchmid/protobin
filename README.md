@@ -1,6 +1,6 @@
 # protobin
 
-A Rust crate with basic functions to encode & decode Protocol Buffer binary messages.
+A rust crate with basic functions to encode & decode protocol buffer binary messages.
 
 ⚠️⚠️⚠️ This crate is currently under development and not complete ⚠️⚠️⚠️
 
