@@ -131,7 +131,7 @@ impl<'a> MsgLenBuilder<'a> {
             panic!("'end_msg_field' or 'end_packed_field' called but no corresponding 'start_msg_field' or 'start_packed_field' left to be closed.");
         };
         assert_eq!((ended.field_number, ended.t), (field_number, t), "Unexpected end call, expected {:?} {:?} but got {field_number:?} {t:?}", ended.field_number, ended.t);
-        self.buf.lens[ended.len_index].1 = self.cur_len;
+        self.buf.lens[ended.len_index].1 = self.cur_len + WireVarInt::sint32_byte_len(self.cur_len);
 
         // restore cur_len
         if let Some(next) = self.buf.len_stack.last() {
