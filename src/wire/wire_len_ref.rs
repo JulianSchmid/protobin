@@ -1,4 +1,4 @@
-use crate::{wire::*, decode::*};
+use crate::{decode::*, wire::*};
 use core::str::Utf8Error;
 
 /// LEN wire type that can be interpred as `string`, `bytes`,
@@ -22,6 +22,8 @@ impl<'a> WireLenRef<'a> {
 
     #[inline]
     pub fn as_sub_msg(&self) -> MsgDecoder<'a> {
-        MsgDecoder { wire_decoder: WireDecoder { data: self.data } }
+        MsgDecoder {
+            wire_decoder: WireDecoder { data: self.data },
+        }
     }
 }

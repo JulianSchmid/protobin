@@ -1,4 +1,3 @@
-
 pub trait PackedScribe {
     fn add_int32(&mut self, value: i32) -> &mut Self;
     fn add_int64(&mut self, value: i64) -> &mut Self;

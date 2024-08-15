@@ -3,7 +3,9 @@ use crate::FieldNumber;
 use super::PackedScribe;
 
 pub trait MsgScribe {
-    type Packed<'a> : PackedScribe where Self: 'a;
+    type Packed<'a>: PackedScribe
+    where
+        Self: 'a;
     type End;
 
     fn add_int32(&mut self, field_number: FieldNumber, value: i32) -> &mut Self;

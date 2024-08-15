@@ -1,4 +1,4 @@
-use crate::{*, builders::*, wire::WireVarInt};
+use crate::{builders::*, wire::WireVarInt, *};
 
 /// Helper to determine the length values of a message (use [`MsgEnc`]
 /// to create).
@@ -9,28 +9,23 @@ pub struct MsgLenBuilder<'a> {
 }
 
 impl<'a> MsgLenBuilder<'a> {
-
     pub fn add_int32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::int32_byte_len(value);
+        self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::int32_byte_len(value);
         self
     }
 
     pub fn add_int64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::int64_byte_len(value);
+        self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::int64_byte_len(value);
         self
     }
 
     pub fn add_uint32_field(&mut self, field_number: FieldNumber, value: u32) -> &mut Self {
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::uint32_byte_len(value);
+        self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::uint32_byte_len(value);
         self
     }
 
     pub fn add_uint64_field(&mut self, field_number: FieldNumber, value: u64) -> &mut Self {
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::uint64_byte_len(value);
+        self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::uint64_byte_len(value);
         self
     }
 
@@ -40,20 +35,17 @@ impl<'a> MsgLenBuilder<'a> {
     }
 
     pub fn add_enum_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::int32_byte_len(value);
+        self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::int32_byte_len(value);
         self
     }
 
     pub fn add_sint32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::sint32_byte_len(value);
+        self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::sint32_byte_len(value);
         self
     }
 
     pub fn add_sint64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::sint64_byte_len(value);
+        self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::sint64_byte_len(value);
         self
     }
 
@@ -89,17 +81,17 @@ impl<'a> MsgLenBuilder<'a> {
 
     pub fn add_string_field(&mut self, field_number: FieldNumber, value: &str) -> &mut Self {
         // TODO add length error
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::int32_byte_len(value.len() as i32) +
-            (value.len() as i32);
+        self.cur_len += WireVarInt::tag_byte_len(field_number)
+            + WireVarInt::int32_byte_len(value.len() as i32)
+            + (value.len() as i32);
         self
     }
 
     pub fn add_bytes_field(&mut self, field_number: FieldNumber, value: &[u8]) -> &mut Self {
         // TODO add length error
-        self.cur_len += WireVarInt::tag_byte_len(field_number) +
-            WireVarInt::int32_byte_len(value.len() as i32) +
-            (value.len() as i32);
+        self.cur_len += WireVarInt::tag_byte_len(field_number)
+            + WireVarInt::int32_byte_len(value.len() as i32)
+            + (value.len() as i32);
         self
     }
 
@@ -111,7 +103,7 @@ impl<'a> MsgLenBuilder<'a> {
         if let Some(e) = self.buf.len_stack.last_mut() {
             e.len = self.cur_len;
         }
-    
+
         // add length stack entry
         self.cur_len = 0;
         self.buf.lens.push((field_number, 0));
@@ -130,7 +122,13 @@ impl<'a> MsgLenBuilder<'a> {
         let Some(ended) = self.buf.len_stack.pop() else {
             panic!("'end_msg_field' or 'end_packed_field' called but no corresponding 'start_msg_field' or 'start_packed_field' left to be closed.");
         };
-        assert_eq!((ended.field_number, ended.t), (field_number, t), "Unexpected end call, expected {:?} {:?} but got {field_number:?} {t:?}", ended.field_number, ended.t);
+        assert_eq!(
+            (ended.field_number, ended.t),
+            (field_number, t),
+            "Unexpected end call, expected {:?} {:?} but got {field_number:?} {t:?}",
+            ended.field_number,
+            ended.t
+        );
         self.buf.lens[ended.len_index].1 = self.cur_len + WireVarInt::sint32_byte_len(self.cur_len);
 
         // restore cur_len
@@ -149,7 +147,10 @@ impl<'a> MsgLenBuilder<'a> {
         self.end_len_area(field_number, LenStackType::Msg)
     }
 
-    pub fn start_packed_field<'b>(&'b mut self, field_number: FieldNumber) -> MsgLenPackedScribe<'a, 'b> {
+    pub fn start_packed_field<'b>(
+        &'b mut self,
+        field_number: FieldNumber,
+    ) -> MsgLenPackedScribe<'a, 'b> {
         MsgLenPackedScribe {
             parent: self.start_len_area(field_number, LenStackType::Packed),
         }
@@ -158,7 +159,6 @@ impl<'a> MsgLenBuilder<'a> {
     pub fn end_packed_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_len_area(field_number, LenStackType::Packed)
     }
-
 }
 
 impl<'a> MsgScribe for MsgLenBuilder<'a> {
@@ -264,11 +264,14 @@ impl<'a> MsgScribe for MsgLenBuilder<'a> {
     fn end_packed(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_packed_field(field_number)
     }
-    
+
     #[inline]
     fn end(self) -> Self::End {
-        assert!(self.buf.len_stack.is_empty(), "Overall end called before all submessages or packed data were ended");
-        MsgSerBuilder{
+        assert!(
+            self.buf.len_stack.is_empty(),
+            "Overall end called before all submessages or packed data were ended"
+        );
+        MsgSerBuilder {
             buf: self.buf,
             next_len_index: 0,
         }

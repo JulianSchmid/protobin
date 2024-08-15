@@ -121,7 +121,7 @@ fn ser_root<S: MsgScribe>(p: &Root, mut s: S) -> S {
     s.add_string(1.try_into().unwrap(), &p.name);
     s.add_int32(2.try_into().unwrap(), p.id);
     s.add_string(3.try_into().unwrap(), &p.email);
-    
+
     for l in &p.level1 {
         s.start_msg(4.try_into().unwrap());
         s = ser_level1(&l, s);
@@ -178,8 +178,27 @@ fn main() -> ExitCode {
         id: 1234,
         email: "greg@greg.net".to_owned(),
         level1: vec![
-            Level1{ a: 1, b: 2, c: vec![], d: 4 },
-            Level1{ a: 1, b: 2, c: vec![ Level2 { a: 1, b: "bstring".to_owned() }, Level2{ a: 3, b: "2ndbstring".to_owned() } ], d: 4 },
+            Level1 {
+                a: 1,
+                b: 2,
+                c: vec![],
+                d: 4,
+            },
+            Level1 {
+                a: 1,
+                b: 2,
+                c: vec![
+                    Level2 {
+                        a: 1,
+                        b: "bstring".to_owned(),
+                    },
+                    Level2 {
+                        a: 3,
+                        b: "2ndbstring".to_owned(),
+                    },
+                ],
+                d: 4,
+            },
         ],
         uint32_min: u32::MIN,
         uint32_zero: 0,
@@ -210,6 +229,6 @@ fn main() -> ExitCode {
     // write to file
     binary_file.write_all(&result).unwrap();
     drop(binary_file);
-    
+
     ExitCode::SUCCESS
 }

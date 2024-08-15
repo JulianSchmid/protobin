@@ -136,7 +136,7 @@ impl WireVarInt {
 
     /// Returns the byte len of a encoded "tag" with the
     /// passed field number.
-    /// 
+    ///
     /// Tag is the value written before a message field
     /// value is written.
     pub fn tag_byte_len(field_number: FieldNumber) -> i32 {
@@ -166,7 +166,7 @@ impl WireVarInt {
             5
         }
     }
-    
+
     fn varint64_len(value: u64) -> i32 {
         if value < (1 << 7) {
             1
@@ -190,7 +190,7 @@ impl WireVarInt {
             10
         }
     }
-    
+
     /// Returns the encoded byte len of a "int32" encoded
     /// as varint (encoded using two’s complements).
     #[inline]

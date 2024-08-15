@@ -1,4 +1,4 @@
-use crate::{*, wire::*};
+use crate::{wire::*, *};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct MsgRecordRef<'a> {

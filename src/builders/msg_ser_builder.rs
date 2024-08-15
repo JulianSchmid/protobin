@@ -1,4 +1,4 @@
-use crate::{*, builders::*};
+use crate::{builders::*, *};
 
 /// Helper to determine serialize a message after all
 /// lengths have been determined.
@@ -9,7 +9,6 @@ pub struct MsgSerBuilder<'a> {
 }
 
 impl<'a> MsgSerBuilder<'a> {
-
     #[inline]
     fn add_varint_tag(&mut self, field_number: FieldNumber) {
         self.buf.encoder.add_var_uint32(field_number.0 << 3);
@@ -47,7 +46,9 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_enum_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.add_varint_tag(field_number);
-        self.buf.encoder.add_var_uint32(u32::from_ne_bytes(value.to_ne_bytes()));
+        self.buf
+            .encoder
+            .add_var_uint32(u32::from_ne_bytes(value.to_ne_bytes()));
         self
     }
 
@@ -77,7 +78,9 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_float_field(&mut self, field_number: FieldNumber, value: f32) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 5);
-        self.buf.encoder.add_fixed32(u32::from_ne_bytes(value.to_ne_bytes()));
+        self.buf
+            .encoder
+            .add_fixed32(u32::from_ne_bytes(value.to_ne_bytes()));
         self
     }
 
@@ -95,7 +98,9 @@ impl<'a> MsgSerBuilder<'a> {
 
     pub fn add_double_field(&mut self, field_number: FieldNumber, value: f64) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 1);
-        self.buf.encoder.add_fixed64(u64::from_ne_bytes(value.to_ne_bytes()));
+        self.buf
+            .encoder
+            .add_fixed64(u64::from_ne_bytes(value.to_ne_bytes()));
         self
     }
 
@@ -114,7 +119,6 @@ impl<'a> MsgSerBuilder<'a> {
     }
 
     fn start_len_area(&mut self, field_number: FieldNumber) -> &mut Self {
-
         // get length value
         let len = self.buf.lens[self.next_len_index];
         self.next_len_index += 1;
@@ -125,7 +129,7 @@ impl<'a> MsgSerBuilder<'a> {
         // write tag and length value
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 2);
         self.buf.encoder.add_var_uint32(len.1 as u32);
-        
+
         self
     }
 
@@ -133,12 +137,14 @@ impl<'a> MsgSerBuilder<'a> {
         self.start_len_area(field_number)
     }
 
-    pub fn start_packed_field<'b>(&'b mut self, field_number: FieldNumber) -> MsgSerPackedScribe<'a, 'b> {
+    pub fn start_packed_field<'b>(
+        &'b mut self,
+        field_number: FieldNumber,
+    ) -> MsgSerPackedScribe<'a, 'b> {
         MsgSerPackedScribe {
             parent: self.start_len_area(field_number),
         }
     }
-
 }
 
 impl<'a> MsgScribe for MsgSerBuilder<'a> {
@@ -244,10 +250,9 @@ impl<'a> MsgScribe for MsgSerBuilder<'a> {
     fn end_packed(&mut self, _: FieldNumber) -> &mut Self {
         self
     }
-    
+
     #[inline]
     fn end(self) -> Self::End {
         &self.buf.encoder.buf
     }
-    
 }

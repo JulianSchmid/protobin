@@ -1,13 +1,11 @@
 use std::ops::RangeInclusive;
 
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct FieldNumber(pub(crate) u32);
 
 impl FieldNumber {
-
     /// Maximum allowed field number.
-    /// 
+    ///
     /// This is determined by the fact that the field number is
     /// part of the tag and the tag is a u32 composed of a 3 bit
     /// value for the "wire type" and 29 bit for the "field number".
@@ -22,8 +20,8 @@ impl FieldNumber {
     #[inline]
     pub const fn try_from_u32(value: u32) -> Result<FieldNumber, FieldNumberIntoError> {
         if value < 1 || value > (u32::MAX >> 3) {
-            Err(FieldNumberIntoError{
-                invalid_value: value
+            Err(FieldNumberIntoError {
+                invalid_value: value,
             })
         } else {
             Ok(FieldNumber(value))
@@ -32,9 +30,9 @@ impl FieldNumber {
 
     /// Convert an [`u32`] to a field number without checking it is smaller
     /// or equal [`FieldNumber::MAX_ALLOWED_U32`] and at least `1`.
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// The caller must ensure the provided value is smaller or equal
     /// [`FieldNumber::MAX_ALLOWED_U32`] and at least `1`. If not undefined
     /// behavior will occur when the field number is serialized.

@@ -63,6 +63,6 @@ fn main() -> ExitCode {
     // write to file
     binary_file.write_all(&result).unwrap();
     drop(binary_file);
-    
+
     ExitCode::SUCCESS
 }
