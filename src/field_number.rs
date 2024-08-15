@@ -14,6 +14,9 @@ impl FieldNumber {
     /// Range of field values reserved for protobuf internal usage.
     pub const RESERVED_FOR_PROTO_INTERNAL: RangeInclusive<u32> = 19000..=19999;
 
+    /// Number one field number.
+    pub const ONE: FieldNumber = FieldNumber(1);
+
     /// Converts a given [`u32`] to a [`FieldNumber`] as long as it is smaller or
     /// equal `0x1FFFFFFF` ([`FieldNumber::MAX_ALLOWED_U32`]) and at least `1` or
     /// bigger. Otherwise an error is returned.
