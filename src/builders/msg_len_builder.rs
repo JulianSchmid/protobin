@@ -133,7 +133,7 @@ impl<'a> MsgLenBuilder<'a> {
 
         // restore cur_len
         if let Some(next) = self.buf.len_stack.last() {
-            self.cur_len += next.len + WireVarInt::sint32_byte_len(self.cur_len);
+            self.cur_len += next.len + WireVarInt::int32_byte_len(self.cur_len);
         } // else just keep the cur_len (makes no difference, no stack left)
 
         self

@@ -128,7 +128,7 @@ impl<'a> MsgSerBuilder<'a> {
 
         // write tag and length value
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 2);
-        self.buf.encoder.add_var_uint32(len.1 as u32);
+        self.buf.encoder.add_var_int32(len.1);
 
         self
     }
