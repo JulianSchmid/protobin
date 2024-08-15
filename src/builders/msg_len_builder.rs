@@ -129,11 +129,11 @@ impl<'a> MsgLenBuilder<'a> {
             ended.field_number,
             ended.t
         );
-        self.buf.lens[ended.len_index].1 = self.cur_len + WireVarInt::sint32_byte_len(self.cur_len);
+        self.buf.lens[ended.len_index].1 = self.cur_len;
 
         // restore cur_len
         if let Some(next) = self.buf.len_stack.last() {
-            self.cur_len += next.len;
+            self.cur_len += next.len + WireVarInt::sint32_byte_len(self.cur_len);
         } // else just keep the cur_len (makes no difference, no stack left)
 
         self
