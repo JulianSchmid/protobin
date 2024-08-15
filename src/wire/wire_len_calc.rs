@@ -1,4 +1,3 @@
-
 /// Helper to calculate the number of bytes used when encoding a
 /// given set of values.a
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -9,7 +8,7 @@ pub struct WireLenCalc {
 
 impl WireLenCalc {
     pub fn new() -> WireLenCalc {
-        WireLenCalc{ len: 0 }
+        WireLenCalc { len: 0 }
     }
 
     /// Add the needed len to encode the given [`u32`] as VARINT to the overall `len`.

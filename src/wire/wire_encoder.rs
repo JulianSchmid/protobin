@@ -23,10 +23,8 @@ impl WireEncoder {
             self.buf.push(value as u8);
         } else if value < (1 << (7 * 2)) {
             // 2 bytes
-            self.buf.extend_from_slice(&[
-                0b1000_0000 | (value as u8),
-                (value >> 7) as u8,
-            ]);
+            self.buf
+                .extend_from_slice(&[0b1000_0000 | (value as u8), (value >> 7) as u8]);
         } else if value < (1 << (7 * 3)) {
             // 3 bytes
             self.buf.extend_from_slice(&[
@@ -75,10 +73,8 @@ impl WireEncoder {
             self.buf.push(value as u8);
         } else if value < (1 << (7 * 2)) {
             // 2 bytes
-            self.buf.extend_from_slice(&[
-                0b1000_0000 | (value as u8),
-                (value >> 7) as u8,
-            ]);
+            self.buf
+                .extend_from_slice(&[0b1000_0000 | (value as u8), (value >> 7) as u8]);
         } else if value < (1 << (7 * 3)) {
             // 3 bytes
             self.buf.extend_from_slice(&[

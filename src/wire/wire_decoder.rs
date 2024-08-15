@@ -124,9 +124,7 @@ impl<'a> WireDecoder<'a> {
         if self.data.len() < n {
             Err(DecodeError::Len)
         } else {
-            let result = unsafe {
-                core::slice::from_raw_parts(self.data.as_ptr(), n)
-            };
+            let result = unsafe { core::slice::from_raw_parts(self.data.as_ptr(), n) };
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(n), self.data.len() - n)
             };
