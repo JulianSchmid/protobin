@@ -36,7 +36,7 @@ Protobuf's wire format prefixes every submessage and length-delimited field with
 1. **Phase 1 (length calculation)** -- walk your data and compute all the nested lengths
 2. **Phase 2 (serialization)** -- serialize the data using the pre-calculated lengths
 
-Both phases use the same serialization function through the `MsgScribe` trait, so you write your serialization logic only once.
+Both phases use the same serialization function through the [`MsgScribe`] trait, so you write your serialization logic only once.
 
 ## Examples
 
@@ -85,9 +85,9 @@ fn main() {
     // Phase 1: calculate lengths
     let step2 = ser_person(&person, builder.start(None));
     // Phase 2: serialize into bytes
-    let bytes: Vec<u8> = ser_person(&person, step2);
+    let bytes = ser_person(&person, step2);
 
-    println!("Encoded {} bytes", bytes.len());
+    assert!(!bytes.is_empty());
 }
 ```
 
@@ -126,22 +126,24 @@ fn ser_outer<S: MsgScribe>(name: &str, items: &[(u64, &str)], mut s: S) -> S {
 fn main() {
     let mut builder = MsgBuilder::new();
 
-    let items = vec![(1, "first"), (2, "second")];
+    let items: Vec<(u64, &str)> = vec![(1, "first"), (2, "second")];
 
     // Phase 1 + Phase 2
     let step2 = ser_outer("example", &items, builder.start(None)).end();
     let bytes = ser_outer("example", &items, step2).end();
 
-    println!("Encoded {} bytes", bytes.len());
+    assert!(!bytes.is_empty());
 }
 ```
 
 ### Decoding a Message
 
-`MsgDecoder` iterates over the tag-length-value records in a protobuf binary message, borrowing the input data (zero-copy):
+[`MsgDecoder`] iterates over the tag-length-value records in a protobuf binary message, borrowing the input data (zero-copy):
 
 ```rust
 use protobin::decode::MsgDecoder;
+use protobin::wire::WireValueRef;
+# use protobin::builders::{MsgBuilder, MsgScribe};
 
 fn decode_person(data: &[u8]) {
     let mut decoder = MsgDecoder::new(data);
@@ -150,8 +152,10 @@ fn decode_person(data: &[u8]) {
         match record.field_number.value() {
             1 => {
                 // string name = 1
-                if let Some(name) = record.value.try_as_string() {
-                    println!("name: {name}");
+                if let WireValueRef::Len(len_ref) = &record.value {
+                    if let Ok(name) = len_ref.try_as_string() {
+                        println!("name: {name}");
+                    }
                 }
             }
             2 => {
@@ -162,8 +166,10 @@ fn decode_person(data: &[u8]) {
             }
             3 => {
                 // string email = 3
-                if let Some(email) = record.value.try_as_string() {
-                    println!("email: {email}");
+                if let WireValueRef::Len(len_ref) = &record.value {
+                    if let Ok(email) = len_ref.try_as_string() {
+                        println!("email: {email}");
+                    }
                 }
             }
             other => {
@@ -172,6 +178,18 @@ fn decode_person(data: &[u8]) {
         }
     }
 }
+# fn ser<S: MsgScribe>(mut s: S) -> S::End {
+#     s.add_string(1.try_into().unwrap(), "Alice");
+#     s.add_int32(2.try_into().unwrap(), 42);
+#     s.add_string(3.try_into().unwrap(), "alice@example.com");
+#     s.end()
+# }
+# fn main() {
+#     let mut builder = MsgBuilder::new();
+#     let step2 = ser(builder.start(None));
+#     let bytes = ser(step2);
+#     decode_person(bytes);
+# }
 ```
 
 ### Decoding Nested Messages
@@ -180,6 +198,8 @@ For LEN-typed fields that contain embedded messages, use `as_sub_msg()` to get a
 
 ```rust
 use protobin::decode::MsgDecoder;
+use protobin::wire::WireValueRef;
+# use protobin::builders::{MsgBuilder, MsgScribe};
 
 fn decode_outer(data: &[u8]) {
     let mut decoder = MsgDecoder::new(data);
@@ -187,13 +207,15 @@ fn decode_outer(data: &[u8]) {
         let record = record.expect("decode error");
         match record.field_number.value() {
             1 => {
-                if let Some(name) = record.value.try_as_string() {
-                    println!("name: {name}");
+                if let WireValueRef::Len(len_ref) = &record.value {
+                    if let Ok(name) = len_ref.try_as_string() {
+                        println!("name: {name}");
+                    }
                 }
             }
             2 => {
                 // Nested message -- decode the sub-message
-                if let protobin::wire::WireValueRef::Len(len_ref) = &record.value {
+                if let WireValueRef::Len(len_ref) = &record.value {
                     let mut sub = len_ref.as_sub_msg();
                     while let Some(inner) = sub.next() {
                         let inner = inner.expect("decode error");
@@ -209,6 +231,20 @@ fn decode_outer(data: &[u8]) {
         }
     }
 }
+# fn ser<S: MsgScribe>(mut s: S) -> S::End {
+#     s.add_string(1.try_into().unwrap(), "example");
+#     s.start_msg(2.try_into().unwrap());
+#     s.add_uint64(1.try_into().unwrap(), 100);
+#     s.add_string(2.try_into().unwrap(), "first");
+#     s.end_msg(2.try_into().unwrap());
+#     s.end()
+# }
+# fn main() {
+#     let mut builder = MsgBuilder::new();
+#     let step2 = ser(builder.start(None));
+#     let bytes = ser(step2);
+#     decode_outer(bytes);
+# }
 ```
 
 ### Inspecting Unknown Protobuf Data
@@ -217,6 +253,7 @@ You can also decode and print arbitrary protobuf binary data without knowing the
 
 ```rust
 use protobin::decode::MsgDecoder;
+# use protobin::builders::{MsgBuilder, MsgScribe};
 
 fn dump(data: &[u8]) {
     let mut decoder = MsgDecoder::new(data);
@@ -225,6 +262,17 @@ fn dump(data: &[u8]) {
         println!("{}: {:?}", record.field_number.value(), record.value);
     }
 }
+# fn ser<S: MsgScribe>(mut s: S) -> S::End {
+#     s.add_string(1.try_into().unwrap(), "hello");
+#     s.add_uint32(2.try_into().unwrap(), 42);
+#     s.end()
+# }
+# fn main() {
+#     let mut builder = MsgBuilder::new();
+#     let step2 = ser(builder.start(None));
+#     let bytes = ser(step2);
+#     dump(bytes);
+# }
 ```
 
 ## Supported Protobuf Types

@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 /// Datatypes for message building.
 pub mod builders;
 
