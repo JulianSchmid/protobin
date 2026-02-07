@@ -12,26 +12,6 @@ impl<'a> MsgDecoder<'a> {
         }
     }
 
-    /// Returns the next message record or TLV (Tag-Length-Value) until
-    /// an error is encountered or no more data is present.
-    ///
-    /// In case an error is encountered the error is returned and in the following
-    /// call `None`.
-    pub fn next(&mut self) -> Option<Result<MsgRecordRef<'a>, DecodeError>> {
-        if self.wire_decoder.data.is_empty() {
-            return None;
-        }
-        match self.next_inner() {
-            Err(err) => {
-                // invalidate the wire decoder so we don't trigger an error in
-                // an infinite loop
-                self.wire_decoder.data = &[];
-                Some(Err(err))
-            }
-            other => Some(other),
-        }
-    }
-
     fn next_inner(&mut self) -> Result<MsgRecordRef<'a>, DecodeError> {
         // read field number & tag
         let tag = self.wire_decoder.read_var_uint32()?;
@@ -62,5 +42,29 @@ impl<'a> MsgDecoder<'a> {
             field_number,
             value,
         })
+    }
+}
+
+impl<'a> Iterator for MsgDecoder<'a> {
+    type Item = Result<MsgRecordRef<'a>, DecodeError>;
+
+    /// Returns the next message record or TLV (Tag-Length-Value) until
+    /// an error is encountered or no more data is present.
+    ///
+    /// In case an error is encountered the error is returned and in the following
+    /// call `None`.
+    fn next(&mut self) -> Option<Result<MsgRecordRef<'a>, DecodeError>> {
+        if self.wire_decoder.data.is_empty() {
+            return None;
+        }
+        match self.next_inner() {
+            Err(err) => {
+                // invalidate the wire decoder so we don't trigger an error in
+                // an infinite loop
+                self.wire_decoder.data = &[];
+                Some(Err(err))
+            }
+            other => Some(other),
+        }
     }
 }
