@@ -40,6 +40,14 @@ jobs:
       - name: Clippy
         run: cargo clippy -- -D warnings
 
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check doc (no warnings)
+        run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+
   msrv-build-and-test:
     runs-on: ubuntu-latest
     steps:
