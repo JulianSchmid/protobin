@@ -3,7 +3,7 @@ use crate::{builders::*, wire::*, FieldNumber};
 /// Buffers to serialize a message (should be reused as much as possible
 /// to avoid allocations).
 ///
-/// The [`MsgEncBuf`] contains the needed buffers to encode
+/// The [`MsgBuilder`] contains the needed buffers to encode
 /// a protobuf message to its "on the wire" binary format.
 ///
 /// The encoding is done in two stages:

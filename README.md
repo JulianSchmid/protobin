@@ -4,23 +4,25 @@
 [![docs.rs](https://img.shields.io/docsrs/protobin)](https://docs.rs/protobin)
 [![License](https://img.shields.io/crates/l/protobin.svg)](https://crates.io/crates/protobin)
 
-Low-level Rust primitives to encode and decode [Protocol Buffer](https://protobuf.dev/) binary messages -- without code generation and without additional allocations.
+Low-level Rust primitives to encode and decode [Protocol Buffer](https://protobuf.dev/) binary messages -- without code generation and with minimal allocations.
 
 ## Motivation
 
 Most protobuf libraries in Rust rely on code generation from `.proto` files or require allocating intermediate data structures. `protobin` takes a different approach: it gives you direct access to the wire format through low-level primitives, letting you encode and decode protobuf messages with full control and minimal overhead.
 
+Encoding still requires some allocations (e.g. the internal buffers used by `MsgBuilder`), but these buffers are reusable across messages, so in steady state no new allocations are needed.
+
 This is useful when you:
 
 - Need to write protobuf data on the wire without a `.proto` schema or code generation step
-- Want to keep allocations to a minimum (the `MsgBuilder` buffers are reusable)
+- Want to minimize allocations (the `MsgBuilder` buffers are reusable across messages)
 - Need to inspect or decode arbitrary protobuf binary data
 - Are building tooling that operates on the wire format directly
 
 ## Key Features
 
 - **No code generation** -- encode and decode directly using field numbers and wire types
-- **Reusable buffers** -- `MsgBuilder` can be reused across messages to avoid repeated allocations
+- **Minimal allocations** -- `MsgBuilder` buffers are reusable, so encoding many messages amortizes to zero additional allocations in steady state
 - **Two-phase encoding** -- lengths are pre-calculated before serialization so no data shifting is needed
 - **Zero-copy decoding** -- `MsgDecoder` iterates over records by borrowing the input data
 - **All protobuf scalar types** -- int32, int64, uint32, uint64, sint32, sint64, fixed32, sfixed32, fixed64, sfixed64, float, double, bool, string, bytes, enums
@@ -36,7 +38,7 @@ Protobuf's wire format prefixes every submessage and length-delimited field with
 1. **Phase 1 (length calculation)** -- walk your data and compute all the nested lengths
 2. **Phase 2 (serialization)** -- serialize the data using the pre-calculated lengths
 
-Both phases use the same serialization function through the [`MsgScribe`] trait, so you write your serialization logic only once.
+Both phases use the same serialization function through the [`MsgScribe`](builders::MsgScribe) trait, so you write your serialization logic only once.
 
 ## Examples
 
@@ -138,7 +140,7 @@ fn main() {
 
 ### Decoding a Message
 
-[`MsgDecoder`] iterates over the tag-length-value records in a protobuf binary message, borrowing the input data (zero-copy):
+[`MsgDecoder`](decode::MsgDecoder) iterates over the tag-length-value records in a protobuf binary message, borrowing the input data (zero-copy):
 
 ```rust
 use protobin::decode::MsgDecoder;

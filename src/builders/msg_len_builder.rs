@@ -1,6 +1,6 @@
 use crate::{builders::*, wire::WireVarInt, *};
 
-/// Helper to determine the length values of a message (use [`MsgEnc`]
+/// Helper to determine the length values of a message (use [`MsgBuilder`]
 /// to create).
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct MsgLenBuilder<'a> {

@@ -5,12 +5,12 @@ pub struct WireEncoder {
 }
 
 impl WireEncoder {
-    /// Create a [`ProtobufEncoder`] with a new `Vec`.
+    /// Create a [`WireEncoder`] with a new `Vec`.
     pub fn new() -> WireEncoder {
         WireEncoder { buf: Vec::new() }
     }
 
-    /// Create a [`ProtobufEncoder`] with the given buffer.
+    /// Create a [`WireEncoder`] with the given buffer.
     pub fn with_buf(buf: Vec<u8>) -> WireEncoder {
         WireEncoder { buf }
     }
@@ -217,8 +217,8 @@ impl WireEncoder {
         self.buf.extend_from_slice(&value.to_le_bytes());
     }
 
-    /// Destroys the [`ProtobufEncoder`] and returns the `buf` of the destroyed
-    /// [`ProtobufEncoder`].
+    /// Destroys the [`WireEncoder`] and returns the `buf` of the destroyed
+    /// [`WireEncoder`].
     #[inline]
     pub fn take_buf(self) -> Vec<u8> {
         self.buf
