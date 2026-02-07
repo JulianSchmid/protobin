@@ -6,7 +6,7 @@ pub struct WireDecoder<'a> {
 }
 
 impl<'a> WireDecoder<'a> {
-    pub fn new(data: &[u8]) -> WireDecoder<'_> {
+    pub fn new(data: &'a [u8]) -> WireDecoder<'a> {
         WireDecoder { data }
     }
 

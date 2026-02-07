@@ -38,7 +38,7 @@ impl MsgBuilder {
     }
 
     /// Start encoding a new message encoding (returns length builder as step 1).
-    pub fn start(&mut self, num_len_values: Option<usize>) -> MsgLenBuilder<'_> {
+    pub fn start<'a>(&'a mut self, num_len_values: Option<usize>) -> MsgLenBuilder<'a> {
         // clear all previous data
         self.lens.clear();
         self.len_stack.clear();
