@@ -3,7 +3,7 @@ use crate::{builders::*, wire::*, FieldNumber};
 /// Buffers to serialize a message (should be reused as much as possible
 /// to avoid allocations).
 ///
-/// The [`MsgEncBuf`] contains the needed buffers to encode
+/// The [`MsgBuilder`] contains the needed buffers to encode
 /// a protobuf message to its "on the wire" binary format.
 ///
 /// The encoding is done in two stages:
@@ -38,7 +38,7 @@ impl MsgBuilder {
     }
 
     /// Start encoding a new message encoding (returns length builder as step 1).
-    pub fn start(&mut self, num_len_values: Option<usize>) -> MsgLenBuilder<'_> {
+    pub fn start<'a>(&'a mut self, num_len_values: Option<usize>) -> MsgLenBuilder<'a> {
         // clear all previous data
         self.lens.clear();
         self.len_stack.clear();
