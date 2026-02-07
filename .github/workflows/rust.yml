@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
       - name: Clippy
         run: cargo clippy -- -D warnings
 
-  min-rust:
+  msrv-build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
