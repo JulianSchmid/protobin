@@ -6,6 +6,12 @@
 
 Low-level Rust primitives to encode and decode [Protocol Buffer](https://protobuf.dev/) binary messages -- without code generation and with minimal allocations.
 
+## Add it to your project
+
+```bash
+cargo add protobin
+```
+
 ## Motivation
 
 Most protobuf libraries in Rust rely on code generation from `.proto` files or require allocating intermediate data structures. `protobin` takes a different approach: it gives you direct access to the wire format through low-level primitives, letting you encode and decode protobuf messages with full control and minimal overhead.

@@ -242,7 +242,10 @@ impl<'a> MsgSerBuilder<'a> {
 }
 
 impl<'a> MsgScribe for MsgSerBuilder<'a> {
-    type Packed<'b> = MsgSerPackedScribe<'a, 'b> where Self: 'b;
+    type Packed<'b>
+        = MsgSerPackedScribe<'a, 'b>
+    where
+        Self: 'b;
     type End = &'a [u8];
 
     #[inline]
@@ -481,7 +484,10 @@ mod tests {
         }
         // custom Display type encodes and decodes correctly
         {
-            struct Point { x: i32, y: i32 }
+            struct Point {
+                x: i32,
+                y: i32,
+            }
             impl std::fmt::Display for Point {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     write!(f, "({}, {})", self.x, self.y)
@@ -491,7 +497,10 @@ mod tests {
             let value = Point { x: 10, y: -20 };
             let expected = format!("{}", value);
             assert_eq!(encode_display(f, &value), encode_string(f, &expected));
-            assert_eq!(decode_single_string(&encode_display(f, &value), f), "(10, -20)");
+            assert_eq!(
+                decode_single_string(&encode_display(f, &value), f),
+                "(10, -20)"
+            );
         }
         // large field number requiring a multi-byte varint tag
         {

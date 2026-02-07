@@ -253,7 +253,10 @@ impl<'a> MsgLenBuilder<'a> {
 }
 
 impl<'a> MsgScribe for MsgLenBuilder<'a> {
-    type Packed<'b> = MsgLenPackedScribe<'a, 'b> where Self: 'b;
+    type Packed<'b>
+        = MsgLenPackedScribe<'a, 'b>
+    where
+        Self: 'b;
     type End = MsgSerBuilder<'a>;
 
     #[inline]
@@ -453,10 +456,7 @@ mod tests {
         {
             let f = FieldNumber(1);
             let value = "Grüße 🌍";
-            assert_eq!(
-                display_str_cur_len(f, &value),
-                string_cur_len(f, value),
-            );
+            assert_eq!(display_str_cur_len(f, &value), string_cur_len(f, value),);
         }
         // large field number requiring a multi-byte varint tag
         {
