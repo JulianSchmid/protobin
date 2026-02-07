@@ -6,10 +6,13 @@
 
 Low-level Rust primitives to encode and decode [Protocol Buffer](https://protobuf.dev/) binary messages -- without code generation and with minimal allocations.
 
-## Add it to your project
+## Usage
 
-```bash
-cargo add protobin
+Add the following to your Cargo.toml:
+
+```toml
+[dependencies]
+protobin = "0.6.0"
 ```
 
 ## Motivation
