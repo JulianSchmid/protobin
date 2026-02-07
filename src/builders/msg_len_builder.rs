@@ -95,6 +95,38 @@ impl<'a> MsgLenBuilder<'a> {
         self
     }
 
+    pub fn add_display_str_field(
+        &mut self,
+        field_number: FieldNumber,
+        value: &dyn std::fmt::Display,
+    ) -> Result<&mut Self, std::fmt::Error> {
+        use std::fmt::Write;
+        let mut counter = FmtByteCounter(0);
+        write!(&mut counter, "{}", value)?;
+        let len = counter.0;
+        // same calculation as for str
+        self.cur_len += WireVarInt::tag_byte_len(field_number)
+            + WireVarInt::int32_byte_len(len as i32)
+            + (len as i32);
+        Ok(self)
+    }
+
+    pub fn add_debug_str_field(
+        &mut self,
+        field_number: FieldNumber,
+        value: &dyn std::fmt::Debug,
+    ) -> Result<&mut Self, std::fmt::Error> {
+        use std::fmt::Write;
+        let mut counter = FmtByteCounter(0);
+        write!(&mut counter, "{:?}", value)?;
+        let len = counter.0;
+        // same calculation as for str
+        self.cur_len += WireVarInt::tag_byte_len(field_number)
+            + WireVarInt::int32_byte_len(len as i32)
+            + (len as i32);
+        Ok(self)
+    }
+
     fn start_len_area(&mut self, field_number: FieldNumber, t: LenStackType) -> &mut Self {
         // add tag (length skipped until after message is done)
         self.cur_len += WireVarInt::tag_byte_len(field_number);
@@ -246,6 +278,24 @@ impl<'a> MsgScribe for MsgLenBuilder<'a> {
     }
 
     #[inline]
+    fn add_display_str(
+        &mut self,
+        field_number: FieldNumber,
+        value: &dyn std::fmt::Display,
+    ) -> Result<&mut Self, std::fmt::Error> {
+        self.add_display_str_field(field_number, value)
+    }
+
+    #[inline]
+    fn add_debug_str(
+        &mut self,
+        field_number: FieldNumber,
+        value: &dyn std::fmt::Debug,
+    ) -> Result<&mut Self, std::fmt::Error> {
+        self.add_debug_str_field(field_number, value)
+    }
+
+    #[inline]
     fn start_msg(&mut self, field_number: FieldNumber) -> &mut Self {
         self.start_msg_field(field_number)
     }
@@ -274,6 +324,135 @@ impl<'a> MsgScribe for MsgLenBuilder<'a> {
         MsgSerBuilder {
             buf: self.buf,
             next_len_index: 0,
+        }
+    }
+}
+
+/// A [`std::fmt::Write`] implementation that only counts the number of
+/// bytes written without storing them.
+struct FmtByteCounter(usize);
+
+impl std::fmt::Write for FmtByteCounter {
+    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+        self.0 += s.len();
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::builders::MsgBuilder;
+
+    /// Helper to get `cur_len` after calling `add_display_str_field`.
+    fn display_str_cur_len(field_number: FieldNumber, value: &dyn std::fmt::Display) -> i32 {
+        let mut b = MsgBuilder::new();
+        let mut len = b.start(None);
+        len.add_display_str_field(field_number, value).unwrap();
+        len.cur_len
+    }
+
+    /// Helper to get `cur_len` after calling `add_debug_str_field`.
+    fn debug_str_cur_len(field_number: FieldNumber, value: &dyn std::fmt::Debug) -> i32 {
+        let mut b = MsgBuilder::new();
+        let mut len = b.start(None);
+        len.add_debug_str_field(field_number, value).unwrap();
+        len.cur_len
+    }
+
+    /// Helper to get `cur_len` after calling `add_string_field`.
+    fn string_cur_len(field_number: FieldNumber, value: &str) -> i32 {
+        let mut b = MsgBuilder::new();
+        let mut len = b.start(None);
+        len.add_string_field(field_number, value);
+        len.cur_len
+    }
+
+    #[test]
+    fn add_display_str_field() {
+        // integer Display matches equivalent add_string_field
+        {
+            let f = FieldNumber(1);
+            let value = 42u32;
+            assert_eq!(
+                display_str_cur_len(f, &value),
+                string_cur_len(f, &format!("{}", value)),
+            );
+        }
+        // empty Display output matches empty string
+        {
+            struct Empty;
+            impl std::fmt::Display for Empty {
+                fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    Ok(())
+                }
+            }
+            let f = FieldNumber(1);
+            assert_eq!(display_str_cur_len(f, &Empty), string_cur_len(f, ""));
+        }
+        // multi-byte UTF-8 content
+        {
+            let f = FieldNumber(1);
+            let value = "Grüße 🌍";
+            assert_eq!(
+                display_str_cur_len(f, &value),
+                string_cur_len(f, value),
+            );
+        }
+        // large field number requiring a multi-byte varint tag
+        {
+            let f = FieldNumber(1000);
+            let value = 9999i64;
+            assert_eq!(
+                display_str_cur_len(f, &value),
+                string_cur_len(f, &format!("{}", value)),
+            );
+        }
+        // failing Display impl propagates the error
+        {
+            struct Failing;
+            impl std::fmt::Display for Failing {
+                fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    Err(std::fmt::Error)
+                }
+            }
+            let mut b = MsgBuilder::new();
+            let mut len = b.start(None);
+            assert!(len.add_display_str_field(FieldNumber(1), &Failing).is_err());
+        }
+    }
+
+    #[test]
+    fn add_debug_str_field() {
+        // vector Debug matches equivalent add_string_field
+        {
+            let f = FieldNumber(2);
+            let value = vec![1, 2, 3];
+            assert_eq!(
+                debug_str_cur_len(f, &value),
+                string_cur_len(f, &format!("{:?}", value)),
+            );
+        }
+        // Option Debug matches equivalent add_string_field
+        {
+            let f = FieldNumber(1);
+            let value = Some("hello");
+            assert_eq!(
+                debug_str_cur_len(f, &value),
+                string_cur_len(f, &format!("{:?}", value)),
+            );
+        }
+        // failing Debug impl propagates the error
+        {
+            struct Failing;
+            impl std::fmt::Debug for Failing {
+                fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    Err(std::fmt::Error)
+                }
+            }
+            let mut b = MsgBuilder::new();
+            let mut len = b.start(None);
+            assert!(len.add_debug_str_field(FieldNumber(1), &Failing).is_err());
         }
     }
 }
