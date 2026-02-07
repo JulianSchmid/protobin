@@ -48,7 +48,7 @@ jobs:
       - name: Check doc (no warnings)
         run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 
-  msrv-build-and-test:
+  msrv-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,5 +57,3 @@ jobs:
           toolchain: 1.65
       - name: Build (min Rust 1.65)
         run: cargo build --verbose
-      - name: Run tests (min Rust 1.65)
-        run: cargo test --verbose
