@@ -9,76 +9,106 @@ pub struct MsgLenBuilder<'a> {
 }
 
 impl<'a> MsgLenBuilder<'a> {
+    /// Adds the byte length of a protobuf `int32` field (VARINT encoded) to the
+    /// current length.
     pub fn add_int32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::int32_byte_len(value);
         self
     }
 
+    /// Adds the byte length of a protobuf `int64` field (VARINT encoded) to the
+    /// current length.
     pub fn add_int64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::int64_byte_len(value);
         self
     }
 
+    /// Adds the byte length of a protobuf `uint32` field (VARINT encoded) to the
+    /// current length.
     pub fn add_uint32_field(&mut self, field_number: FieldNumber, value: u32) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::uint32_byte_len(value);
         self
     }
 
+    /// Adds the byte length of a protobuf `uint64` field (VARINT encoded) to the
+    /// current length.
     pub fn add_uint64_field(&mut self, field_number: FieldNumber, value: u64) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::uint64_byte_len(value);
         self
     }
 
+    /// Adds the byte length of a protobuf `bool` field (VARINT encoded, always
+    /// 1 byte) to the current length.
     pub fn add_bool_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + 1;
         self
     }
 
+    /// Adds the byte length of a protobuf `enum` field (VARINT encoded) to the
+    /// current length.
     pub fn add_enum_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::int32_byte_len(value);
         self
     }
 
+    /// Adds the byte length of a protobuf `sint32` field (VARINT with ZigZag
+    /// encoding) to the current length.
     pub fn add_sint32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::sint32_byte_len(value);
         self
     }
 
+    /// Adds the byte length of a protobuf `sint64` field (VARINT with ZigZag
+    /// encoding) to the current length.
     pub fn add_sint64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + WireVarInt::sint64_byte_len(value);
         self
     }
 
+    /// Adds the byte length of a protobuf `fixed32` field (4 bytes, little-endian)
+    /// to the current length.
     pub fn add_fixed32_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + 4;
         self
     }
 
+    /// Adds the byte length of a protobuf `sfixed32` field (4 bytes, little-endian)
+    /// to the current length.
     pub fn add_sfixed32_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + 4;
         self
     }
 
+    /// Adds the byte length of a protobuf `float` field (4 bytes, little-endian)
+    /// to the current length.
     pub fn add_float_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + 4;
         self
     }
 
+    /// Adds the byte length of a protobuf `fixed64` field (8 bytes, little-endian)
+    /// to the current length.
     pub fn add_fixed64_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + 8;
         self
     }
 
+    /// Adds the byte length of a protobuf `sfixed64` field (8 bytes, little-endian)
+    /// to the current length.
     pub fn add_sfixed64_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + 8;
         self
     }
 
+    /// Adds the byte length of a protobuf `double` field (8 bytes, little-endian)
+    /// to the current length.
     pub fn add_double_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.cur_len += WireVarInt::tag_byte_len(field_number) + 8;
         self
     }
 
+    /// Adds the byte length of a protobuf `string` field (LEN encoded: tag +
+    /// varint length + UTF-8 bytes) to the current length.
     pub fn add_string_field(&mut self, field_number: FieldNumber, value: &str) -> &mut Self {
         // TODO add length error
         self.cur_len += WireVarInt::tag_byte_len(field_number)
@@ -87,6 +117,8 @@ impl<'a> MsgLenBuilder<'a> {
         self
     }
 
+    /// Adds the byte length of a protobuf `bytes` field (LEN encoded: tag +
+    /// varint length + raw bytes) to the current length.
     pub fn add_bytes_field(&mut self, field_number: FieldNumber, value: &[u8]) -> &mut Self {
         // TODO add length error
         self.cur_len += WireVarInt::tag_byte_len(field_number)
@@ -95,6 +127,12 @@ impl<'a> MsgLenBuilder<'a> {
         self
     }
 
+    /// Adds the byte length of a protobuf `string` field whose content is
+    /// produced by the [`std::fmt::Display`] implementation of `value`.
+    ///
+    /// The length is determined by a byte-counting [`std::fmt::Write`] adapter
+    /// that never allocates, using the same calculation as
+    /// [`add_string_field`](Self::add_string_field) afterwards.
     pub fn add_display_str_field(
         &mut self,
         field_number: FieldNumber,
@@ -111,6 +149,12 @@ impl<'a> MsgLenBuilder<'a> {
         Ok(self)
     }
 
+    /// Adds the byte length of a protobuf `string` field whose content is
+    /// produced by the [`std::fmt::Debug`] implementation of `value`.
+    ///
+    /// The length is determined by a byte-counting [`std::fmt::Write`] adapter
+    /// that never allocates, using the same calculation as
+    /// [`add_string_field`](Self::add_string_field) afterwards.
     pub fn add_debug_str_field(
         &mut self,
         field_number: FieldNumber,
@@ -171,14 +215,25 @@ impl<'a> MsgLenBuilder<'a> {
         self
     }
 
+    /// Begins length tracking for a nested sub-message field. Must be paired
+    /// with a matching [`end_msg_field`](Self::end_msg_field) call using the
+    /// same `field_number`.
     pub fn start_msg_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.start_len_area(field_number, LenStackType::Msg)
     }
 
+    /// Ends length tracking for a nested sub-message field previously started
+    /// with [`start_msg_field`](Self::start_msg_field). The accumulated byte
+    /// length of the sub-message is stored so that the serialization phase can
+    /// emit the correct varint length prefix.
     pub fn end_msg_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_len_area(field_number, LenStackType::Msg)
     }
 
+    /// Begins length tracking for a packed repeated field and returns a
+    /// [`MsgLenPackedScribe`] that can be used to add the packed elements.
+    /// Must be paired with a matching [`end_packed_field`](Self::end_packed_field)
+    /// call using the same `field_number`.
     pub fn start_packed_field<'b>(
         &'b mut self,
         field_number: FieldNumber,
@@ -188,6 +243,10 @@ impl<'a> MsgLenBuilder<'a> {
         }
     }
 
+    /// Ends length tracking for a packed repeated field previously started
+    /// with [`start_packed_field`](Self::start_packed_field). The accumulated
+    /// byte length is stored so that the serialization phase can emit the
+    /// correct varint length prefix.
     pub fn end_packed_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_len_area(field_number, LenStackType::Packed)
     }

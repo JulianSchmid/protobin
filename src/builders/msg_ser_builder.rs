@@ -9,41 +9,49 @@ pub struct MsgSerBuilder<'a> {
 }
 
 impl<'a> MsgSerBuilder<'a> {
+    /// Writes the VARINT wire-type tag for the given field number.
     #[inline]
     fn add_varint_tag(&mut self, field_number: FieldNumber) {
         self.buf.encoder.add_var_uint32(field_number.0 << 3);
     }
 
+    /// Serializes a protobuf `int32` field (tag + VARINT value) into the buffer.
     pub fn add_int32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf.encoder.add_var_int32(value);
         self
     }
 
+    /// Serializes a protobuf `int64` field (tag + VARINT value) into the buffer.
     pub fn add_int64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf.encoder.add_var_int64(value);
         self
     }
 
+    /// Serializes a protobuf `uint32` field (tag + VARINT value) into the buffer.
     pub fn add_uint32_field(&mut self, field_number: FieldNumber, value: u32) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf.encoder.add_var_uint32(value);
         self
     }
 
+    /// Serializes a protobuf `uint64` field (tag + VARINT value) into the buffer.
     pub fn add_uint64_field(&mut self, field_number: FieldNumber, value: u64) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf.encoder.add_var_uint64(value);
         self
     }
 
+    /// Serializes a protobuf `bool` field (tag + single-byte VARINT) into the
+    /// buffer.
     pub fn add_bool_field(&mut self, field_number: FieldNumber, value: bool) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf.encoder.add_bool(value);
         self
     }
 
+    /// Serializes a protobuf `enum` field (tag + VARINT value) into the buffer.
     pub fn add_enum_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf
@@ -52,30 +60,40 @@ impl<'a> MsgSerBuilder<'a> {
         self
     }
 
+    /// Serializes a protobuf `sint32` field (tag + ZigZag-encoded VARINT) into
+    /// the buffer.
     pub fn add_sint32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf.encoder.add_var_sint32(value);
         self
     }
 
+    /// Serializes a protobuf `sint64` field (tag + ZigZag-encoded VARINT) into
+    /// the buffer.
     pub fn add_sint64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.add_varint_tag(field_number);
         self.buf.encoder.add_var_sint64(value);
         self
     }
 
+    /// Serializes a protobuf `fixed32` field (I32 wire-type tag + 4 bytes
+    /// little-endian) into the buffer.
     pub fn add_fixed32_field(&mut self, field_number: FieldNumber, value: u32) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 5);
         self.buf.encoder.add_fixed32(value);
         self
     }
 
+    /// Serializes a protobuf `sfixed32` field (I32 wire-type tag + 4 bytes
+    /// little-endian) into the buffer.
     pub fn add_sfixed32_field(&mut self, field_number: FieldNumber, value: i32) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 5);
         self.buf.encoder.add_sfixed32(value);
         self
     }
 
+    /// Serializes a protobuf `float` field (I32 wire-type tag + 4 bytes
+    /// little-endian IEEE 754) into the buffer.
     pub fn add_float_field(&mut self, field_number: FieldNumber, value: f32) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 5);
         self.buf
@@ -84,18 +102,24 @@ impl<'a> MsgSerBuilder<'a> {
         self
     }
 
+    /// Serializes a protobuf `fixed64` field (I64 wire-type tag + 8 bytes
+    /// little-endian) into the buffer.
     pub fn add_fixed64_field(&mut self, field_number: FieldNumber, value: u64) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 1);
         self.buf.encoder.add_fixed64(value);
         self
     }
 
+    /// Serializes a protobuf `sfixed64` field (I64 wire-type tag + 8 bytes
+    /// little-endian) into the buffer.
     pub fn add_sfixed64_field(&mut self, field_number: FieldNumber, value: i64) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 1);
         self.buf.encoder.add_sfixed64(value);
         self
     }
 
+    /// Serializes a protobuf `double` field (I64 wire-type tag + 8 bytes
+    /// little-endian IEEE 754) into the buffer.
     pub fn add_double_field(&mut self, field_number: FieldNumber, value: f64) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 1);
         self.buf
@@ -104,6 +128,8 @@ impl<'a> MsgSerBuilder<'a> {
         self
     }
 
+    /// Serializes a protobuf `string` field (LEN wire-type tag + varint length
+    /// + UTF-8 bytes) into the buffer.
     pub fn add_string_field(&mut self, field_number: FieldNumber, value: &str) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 2);
         self.buf.encoder.add_var_uint32(value.len() as u32);
@@ -111,6 +137,8 @@ impl<'a> MsgSerBuilder<'a> {
         self
     }
 
+    /// Serializes a protobuf `bytes` field (LEN wire-type tag + varint length
+    /// + raw bytes) into the buffer.
     pub fn add_bytes_field(&mut self, field_number: FieldNumber, value: &[u8]) -> &mut Self {
         self.buf.encoder.add_var_uint32((field_number.0 << 3) | 2);
         self.buf.encoder.add_var_uint32(value.len() as u32);
@@ -118,6 +146,13 @@ impl<'a> MsgSerBuilder<'a> {
         self
     }
 
+    /// Serializes a protobuf `string` field whose content is produced by the
+    /// [`std::fmt::Display`] implementation of `value`.
+    ///
+    /// The formatted output is written directly into the encoding buffer
+    /// without allocating an intermediate [`String`]. The byte length is
+    /// determined first via a counting pass, then the LEN wire-type tag,
+    /// varint length, and formatted bytes are emitted.
     pub fn add_display_str_field(
         &mut self,
         field_number: FieldNumber,
@@ -140,6 +175,13 @@ impl<'a> MsgSerBuilder<'a> {
         Ok(self)
     }
 
+    /// Serializes a protobuf `string` field whose content is produced by the
+    /// [`std::fmt::Debug`] implementation of `value`.
+    ///
+    /// The formatted output is written directly into the encoding buffer
+    /// without allocating an intermediate [`String`]. The byte length is
+    /// determined first via a counting pass, then the LEN wire-type tag,
+    /// varint length, and formatted bytes are emitted.
     pub fn add_debug_str_field(
         &mut self,
         field_number: FieldNumber,
@@ -177,10 +219,18 @@ impl<'a> MsgSerBuilder<'a> {
         self
     }
 
+    /// Begins serialization of a nested sub-message field. Writes the LEN
+    /// wire-type tag and the pre-calculated varint length prefix (determined
+    /// during the length phase) into the buffer. Subsequent field calls will
+    /// write the sub-message content directly after the prefix.
     pub fn start_msg_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.start_len_area(field_number)
     }
 
+    /// Begins serialization of a packed repeated field. Writes the LEN
+    /// wire-type tag and the pre-calculated varint length prefix into the
+    /// buffer and returns a [`MsgSerPackedScribe`] that can be used to
+    /// serialize the packed elements.
     pub fn start_packed_field<'b>(
         &'b mut self,
         field_number: FieldNumber,
