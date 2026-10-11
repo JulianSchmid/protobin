@@ -2,8 +2,13 @@
 
 ## 0.7.0
 
+### Added
+
+- `DecodeError` implements `Display`, `core::error::Error` and `Hash`.
+
 ### Changed
 
+- **Breaking:** `DecodeError::Len` is now `DecodeError::Len { required, remaining }` and reports how many bytes were needed and how many were left.
 - Raised MSRV from `1.65` to `1.81`, so the error types can implement `core::error::Error`.
 
 ## 0.6.0

@@ -65,7 +65,10 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_byte(&mut self) -> Result<u8, DecodeError> {
         if self.data.is_empty() {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: 1,
+                remaining: 0,
+            })
         } else {
             let value = unsafe { *self.data.get_unchecked(0) };
             self.data = unsafe {
@@ -78,7 +81,10 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_4bytes(&mut self) -> Result<[u8; 4], DecodeError> {
         if self.data.len() < 4 {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: 4,
+                remaining: self.data.len(),
+            })
         } else {
             let result = unsafe {
                 [
@@ -98,7 +104,10 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_8bytes(&mut self) -> Result<[u8; 8], DecodeError> {
         if self.data.len() < 8 {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: 8,
+                remaining: self.data.len(),
+            })
         } else {
             let result = unsafe {
                 [
@@ -122,7 +131,10 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_nbyte(&mut self, n: usize) -> Result<&'a [u8], DecodeError> {
         if self.data.len() < n {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: n,
+                remaining: self.data.len(),
+            })
         } else {
             let result = unsafe { core::slice::from_raw_parts(self.data.as_ptr(), n) };
             self.data = unsafe {
@@ -135,8 +147,71 @@ impl<'a> WireDecoder<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::wire::*;
+    use crate::{decode::*, wire::*};
     use proptest::prelude::*;
+
+    #[test]
+    fn take_byte() {
+        // not enough data
+        {
+            let mut reader = WireDecoder::new(&[]);
+            assert_eq!(
+                Err(DecodeError::Len {
+                    required: 1,
+                    remaining: 0
+                }),
+                reader.take_byte()
+            );
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn take_4bytes(data in proptest::collection::vec(any::<u8>(), 0..4)) {
+            // not enough data
+            let mut reader = WireDecoder::new(&data);
+            prop_assert_eq!(
+                Err(DecodeError::Len {
+                    required: 4,
+                    remaining: data.len()
+                }),
+                reader.take_4bytes()
+            );
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn take_8bytes(data in proptest::collection::vec(any::<u8>(), 0..8)) {
+            // not enough data
+            let mut reader = WireDecoder::new(&data);
+            prop_assert_eq!(
+                Err(DecodeError::Len {
+                    required: 8,
+                    remaining: data.len()
+                }),
+                reader.take_8bytes()
+            );
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn take_nbyte(
+            data in proptest::collection::vec(any::<u8>(), 0..16),
+            missing in 1usize..16
+        ) {
+            // not enough data
+            let mut reader = WireDecoder::new(&data);
+            prop_assert_eq!(
+                Err(DecodeError::Len {
+                    required: data.len() + missing,
+                    remaining: data.len()
+                }),
+                reader.take_nbyte(data.len() + missing)
+            );
+        }
+    }
 
     proptest! {
         #[test]
