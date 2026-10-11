@@ -21,7 +21,7 @@ impl<'a> WireDecoder<'a> {
                 return Ok(result);
             }
         }
-        Err(DecodeError::UnexpectedContinuationBit)
+        Err(DecodeError::UnexpectedContinuationBit { max_bytes: 5 })
     }
 
     /// Read a VARINT uint64 from the `data` slice and move `data`
@@ -35,7 +35,7 @@ impl<'a> WireDecoder<'a> {
                 return Ok(result);
             }
         }
-        Err(DecodeError::UnexpectedContinuationBit)
+        Err(DecodeError::UnexpectedContinuationBit { max_bytes: 10 })
     }
 
     /// Read fixed sized [`u32`] from the `data` slice and move `data`
@@ -149,6 +149,30 @@ impl<'a> WireDecoder<'a> {
 mod tests {
     use crate::{decode::*, wire::*};
     use proptest::prelude::*;
+
+    #[test]
+    fn read_var_uint32() {
+        // continuation bit still set in the 5th byte
+        {
+            let mut reader = WireDecoder::new(&[0xff; 6]);
+            assert_eq!(
+                Err(DecodeError::UnexpectedContinuationBit { max_bytes: 5 }),
+                reader.read_var_uint32()
+            );
+        }
+    }
+
+    #[test]
+    fn read_var_uint64() {
+        // continuation bit still set in the 10th byte
+        {
+            let mut reader = WireDecoder::new(&[0xff; 11]);
+            assert_eq!(
+                Err(DecodeError::UnexpectedContinuationBit { max_bytes: 10 }),
+                reader.read_var_uint64()
+            );
+        }
+    }
 
     #[test]
     fn take_byte() {

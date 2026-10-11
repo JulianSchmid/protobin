@@ -13,7 +13,11 @@ pub enum DecodeError {
 
     /// A varint still had its continuation bit set after the maximum
     /// number of bytes for its type.
-    UnexpectedContinuationBit,
+    UnexpectedContinuationBit {
+        /// Maximum number of bytes allowed for the varint (5 for 32 bit
+        /// and 10 for 64 bit values).
+        max_bytes: usize,
+    },
 
     /// The tag contained a wire type that is not part of the
     /// [protobuf encoding](https://protobuf.dev/programming-guides/encoding/#structure).
@@ -31,9 +35,9 @@ impl fmt::Display for DecodeError {
                 f,
                 "Decode error: Not enough data, '{required}' byte(s) required but only '{remaining}' byte(s) left."
             ),
-            UnexpectedContinuationBit => write!(
+            UnexpectedContinuationBit { max_bytes } => write!(
                 f,
-                "Decode error: Varint is longer than allowed for its type (continuation bit still set in the last allowed byte)."
+                "Decode error: Varint is longer than the allowed '{max_bytes}' bytes."
             ),
             UnknownWireType(wire_type) => {
                 write!(f, "Decode error: Unknown wire type '{wire_type}'.")
@@ -98,8 +102,8 @@ mod test {
             )
         );
         assert_eq!(
-            "Decode error: Varint is longer than allowed for its type (continuation bit still set in the last allowed byte).",
-            format!("{}", UnexpectedContinuationBit)
+            "Decode error: Varint is longer than the allowed '5' bytes.",
+            format!("{}", UnexpectedContinuationBit { max_bytes: 5 })
         );
         assert_eq!(
             "Decode error: Unknown wire type '7'.",
@@ -115,7 +119,7 @@ mod test {
                 required: 1,
                 remaining: 0,
             },
-            UnexpectedContinuationBit,
+            UnexpectedContinuationBit { max_bytes: 10 },
             UnknownWireType(6),
         ];
         for v in values {
