@@ -17,6 +17,18 @@ cargo +1.81 build                            # MSRV check (build only; dev-deps 
 
 Run a subset of tests with a name filter, e.g. `cargo test msg_ser_builder` or `cargo test --doc`.
 
+Coverage (not run in CI) uses `cargo-llvm-cov`, a global tool rather than a crate dependency:
+
+```sh
+cargo install cargo-llvm-cov                                 # one-time setup
+rustup component add llvm-tools-preview                      # one-time setup
+rustup component add llvm-tools-preview --toolchain nightly  # one-time setup, for the branch variant
+cargo llvm-cov --html                                        # line and region coverage, report in target/llvm-cov/html/index.html
+cargo +nightly llvm-cov --branch --doctests --html           # adds branch coverage and the README doctests (nightly only)
+```
+
+The coding style requires every branch and error path to be tested, so check branches with the nightly variant. Branch coverage counts only `if`, `&&` and `||` conditions; untested `match` arms show up only as missed regions. `cargo llvm-cov report` re-reads the last run's data, so pass it the same toolchain and flags as that run. Proptests make the numbers vary slightly from run to run.
+
 Examples: `cargo run --example gen_test_msg -- out.proto out.bin` (also `gen_complex_msg`) writes a `.proto` schema plus an encoded message for checking against external protobuf tooling. `cargo run --example print_wire_types -- out.bin` dumps the records of any protobuf binary.
 
 ## Constraints
