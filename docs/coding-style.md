@@ -37,6 +37,18 @@ How code is written in protobin. Where existing code disagrees with a rule here,
 - Unchecked functions stay `pub(crate)` unless there is a reason to expose them (`from_u32_unchecked` is public so it works in `const` contexts).
 - Protobuf fixed-size values (`fixed32`, `sfixed64`, `float`, `double`, ...) are little endian: convert with `to_le_bytes` / `from_le_bytes`, so the bytes are identical on every target.
 
+## Performance & allocation
+
+The crate aims to be as fast as possible. Encoding and decoding are the hot paths: keep them allocation-free and statically dispatched.
+
+- Decoding never allocates. Decoders and `*Ref` types are zero-copy views that borrow from the input slice.
+- Encoding allocates only in `MsgBuilder`'s reusable buffers. Clear them between messages instead of recreating them, so a reused `MsgBuilder` allocates nothing once its buffers have grown. Reserve capacity up front whenever the size is known.
+- Public methods take borrowed input (`&str`, `&[u8]`, `&dyn Display`) rather than an owned `String` / `Vec`.
+- Write straight into the output buffer, the way `add_display_str` formats through `core::fmt::Write` into the encoder. Library code never builds an intermediate `String`, `Vec`, `Box` or `collect`ed value.
+- Use generics (static dispatch) on encode and decode paths. The exception is `core::fmt` values (`&dyn Display`, `&dyn Debug`): `core::fmt` dispatches dynamically internally, so generics would only add code bloat.
+- Mark small functions on the encode and decode paths `#[inline]`.
+- Back performance-motivated changes, especially new `unsafe` code, with numbers: run the benchmarks before and after, and put the comparison in the commit message or PR.
+
 ## Documentation
 
 Write doc comments for users of the crate, short and sweet; implementation details and internal reasoning go in code comments.
