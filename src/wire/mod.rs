@@ -19,6 +19,9 @@ pub use wire_len_ref::*;
 mod wire_type;
 pub use wire_type::*;
 
+mod wire_value_into_error;
+pub use wire_value_into_error::*;
+
 mod wire_value_ref;
 pub use wire_value_ref::*;
 

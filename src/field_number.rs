@@ -1,3 +1,4 @@
+use crate::*;
 use std::ops::RangeInclusive;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -84,9 +85,4 @@ impl From<FieldNumber> for u32 {
     fn from(value: FieldNumber) -> Self {
         value.0
     }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct FieldNumberIntoError {
-    invalid_value: u32,
 }

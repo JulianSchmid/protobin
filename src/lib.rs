@@ -11,3 +11,6 @@ pub mod wire;
 
 mod field_number;
 pub use field_number::*;
+
+mod field_number_into_error;
+pub use field_number_into_error::*;
