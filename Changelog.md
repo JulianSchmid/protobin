@@ -6,6 +6,7 @@
 
 - `DecodeError` implements `Display`, `core::error::Error` and `Hash`.
 - `WireValueIntoError` implements `Display` and `core::error::Error`.
+- `FieldNumberIntoError` implements `Display` and `core::error::Error`, and `FieldNumberIntoError::invalid_value()` returns the value that was rejected.
 
 ### Changed
 
