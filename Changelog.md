@@ -44,5 +44,4 @@
 
 ### Fixed
 
-- **Breaking:** `WireValueRef::try_as_bool` returns the new `WireValueIntoError::VarIntValueInvalidBool` for varints other than `0` or `1`, instead of `VarIntValueTooBigFor32Bit`.
 - Corrected broken intra-doc links: `WireValue` -> `WireValueRef`, `MsgEncBuf` -> `MsgBuilder`, `ProtobufEncoder` -> `WireEncoder`.
