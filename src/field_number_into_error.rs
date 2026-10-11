@@ -32,11 +32,11 @@ impl core::error::Error for FieldNumberIntoError {}
 #[cfg(test)]
 mod test {
     use super::*;
-    use core::error::Error;
-    use std::{
-        collections::hash_map::DefaultHasher,
+    use core::{
+        error::Error,
         hash::{Hash, Hasher},
     };
+    use std::collections::hash_map::DefaultHasher;
 
     #[test]
     fn invalid_value() {

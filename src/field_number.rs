@@ -1,5 +1,5 @@
 use crate::*;
-use std::ops::RangeInclusive;
+use core::ops::RangeInclusive;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct FieldNumber(pub(crate) u32);

@@ -66,22 +66,22 @@ pub trait MsgScribe {
     fn add_bytes(&mut self, field_number: FieldNumber, value: &[u8]) -> &mut Self;
 
     /// Adds a protobuf `string` field by formatting the given value using its
-    /// [`std::fmt::Display`] implementation directly into the serialization
+    /// [`core::fmt::Display`] implementation directly into the serialization
     /// buffer, avoiding intermediate [`String`] allocations.
     fn add_display_str(
         &mut self,
         field_number: FieldNumber,
-        value: &dyn std::fmt::Display,
-    ) -> Result<&mut Self, std::fmt::Error>;
+        value: &dyn core::fmt::Display,
+    ) -> Result<&mut Self, core::fmt::Error>;
 
     /// Adds a protobuf `string` field by formatting the given value using its
-    /// [`std::fmt::Debug`] implementation directly into the serialization
+    /// [`core::fmt::Debug`] implementation directly into the serialization
     /// buffer, avoiding intermediate [`String`] allocations.
     fn add_debug_str(
         &mut self,
         field_number: FieldNumber,
-        value: &dyn std::fmt::Debug,
-    ) -> Result<&mut Self, std::fmt::Error>;
+        value: &dyn core::fmt::Debug,
+    ) -> Result<&mut Self, core::fmt::Error>;
 
     /// Begins a nested sub-message field. All fields added after this call
     /// (until the matching [`end_msg`](Self::end_msg)) belong to the
