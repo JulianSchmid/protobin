@@ -26,6 +26,7 @@ Examples: `cargo run --example gen_test_msg -- out.proto out.bin` (also `gen_com
 - **`README.md` is the crate-level doc** (`#![doc = include_str!("../README.md")]` in `src/lib.rs`). Its Rust code blocks run as doctests, with `#`-prefixed lines hidden, and its intra-doc links (e.g. `` [`MsgScribe`](builders::MsgScribe) ``) must resolve or the `cargo doc -D warnings` job fails.
 - Commit new files under `proptest-regressions/`, since proptest replays those seeds on every run.
 - Record user-visible changes in `Changelog.md` under the current version heading.
+- **Coding style:** follow `docs/coding-style.md` when writing, reviewing or committing code (naming, errors and panics, `unsafe`, docs, tests, commit structure).
 
 ## Architecture
 
@@ -53,3 +54,17 @@ To add a new field type, you usually touch all of these:
 - the matching size and encoding helpers in `wire/`.
 
 Length-phase methods for fixed-size types omit the value (e.g. `MsgLenBuilder::add_fixed32_field(field_number)`). Lengths are tracked as `i32`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as local markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
