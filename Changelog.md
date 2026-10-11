@@ -8,6 +8,7 @@
 - `WireValueIntoError` implements `Display` and `core::error::Error`.
 - `FieldNumberIntoError` implements `Display` and `core::error::Error`, and `FieldNumberIntoError::invalid_value()` returns the value that was rejected.
 - `WireValueRef::try_as_fixed32`, `try_as_sfixed32`, `try_as_float`, `try_as_fixed64`, `try_as_sfixed64` and `try_as_double`, following the `try_` prefix of the other fallible conversions.
+- `FieldNumber::try_get_next_unreserved`, which returns a `FieldNumberIntoError` after the maximum field number instead of panicking.
 - `# Panics` sections on the methods that panic on API misuse, including the `MsgScribe` methods: unbalanced or mismatched `start_*` / `end_*` calls in the length phase, and `start_*` calls in the serialization phase that don't match the length phase.
 
 ### Changed
@@ -19,6 +20,7 @@
 ### Deprecated
 
 - `WireValueRef::as_fixed32`, `as_sfixed32`, `as_float`, `as_fixed64`, `as_sfixed64` and `as_double`. Use the `try_as_*` methods of the same type instead. The old names will be removed with 1.0.
+- `FieldNumber::get_next_unreserved`, which panics after the maximum field number. Use `FieldNumber::try_get_next_unreserved` instead. The old name will be removed with 1.0.
 
 ### Fixed
 

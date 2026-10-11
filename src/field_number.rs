@@ -57,24 +57,40 @@ impl FieldNumber {
         self.0
     }
 
-    /// Return the next unreserved FieldNumber.
+    /// Return the next unreserved FieldNumber, skipping
+    /// [`FieldNumber::RESERVED_FOR_PROTO_INTERNAL`].
+    ///
+    /// Returns an error holding `0x20000000` if the field number is the
+    /// maximum `0x1FFFFFFF` ([`FieldNumber::MAX_ALLOWED_U32`]), as no field
+    /// number follows it.
+    #[inline]
+    pub const fn try_get_next_unreserved(&self) -> Result<FieldNumber, FieldNumberIntoError> {
+        if self.0 >= FieldNumber::MAX_ALLOWED_U32 {
+            Err(FieldNumberIntoError {
+                invalid_value: FieldNumber::MAX_ALLOWED_U32 + 1,
+            })
+        } else if 19000 <= self.0 + 1 && self.0 < 19999 {
+            // According to https://protobuf.dev/programming-guides/proto3/#assigning
+            // 19000 till 19999 are reserved, jump after these
+            Ok(FieldNumber(20000))
+        } else {
+            Ok(FieldNumber(self.0 + 1))
+        }
+    }
+
+    /// Deprecated, panicking version of
+    /// [`FieldNumber::try_get_next_unreserved`].
     ///
     /// # Panics
     ///
     /// Panics if the field number is the maximum `0x1FFFFFFF`
     /// ([`FieldNumber::MAX_ALLOWED_U32`]), as no field number follows it.
+    #[deprecated(since = "0.7.0", note = "Use `try_get_next_unreserved` instead")]
     #[inline]
     pub const fn get_next_unreserved(&self) -> FieldNumber {
-        assert!(
-            self.0 < FieldNumber::MAX_ALLOWED_U32,
-            "There is no field number after the maximum '536870911'."
-        );
-        if 19000 <= self.0 + 1 && self.0 < 19999 {
-            // According to https://protobuf.dev/programming-guides/proto3/#assigning
-            // 19000 till 19999 are reserved, jump after these
-            FieldNumber(20000)
-        } else {
-            FieldNumber(self.0 + 1)
+        match self.try_get_next_unreserved() {
+            Ok(next) => next,
+            Err(_) => panic!("There is no field number after the maximum '536870911'."),
         }
     }
 }
@@ -102,35 +118,57 @@ mod test {
 
     proptest! {
         #[test]
-        fn get_next_unreserved(
+        fn try_get_next_unreserved(
             value in prop_oneof![1u32..18999, 19999..FieldNumber::MAX_ALLOWED_U32],
             before_reserved in 18999u32..19999,
         ) {
             {
                 // normal case
                 prop_assert_eq!(
-                    FieldNumber(value + 1),
-                    FieldNumber(value).get_next_unreserved()
+                    Ok(FieldNumber(value + 1)),
+                    FieldNumber(value).try_get_next_unreserved()
                 );
             }
             {
                 // skips the range reserved for protobuf internal usage
                 prop_assert_eq!(
-                    FieldNumber(20000),
-                    FieldNumber(before_reserved).get_next_unreserved()
+                    Ok(FieldNumber(20000)),
+                    FieldNumber(before_reserved).try_get_next_unreserved()
                 );
             }
             {
                 // the field number before the maximum
                 prop_assert_eq!(
-                    FieldNumber(0x1FFF_FFFF),
-                    FieldNumber(0x1FFF_FFFE).get_next_unreserved()
+                    Ok(FieldNumber(0x1FFF_FFFF)),
+                    FieldNumber(0x1FFF_FFFE).try_get_next_unreserved()
+                );
+            }
+            {
+                // no field number follows the maximum
+                prop_assert_eq!(
+                    Err(FieldNumberIntoError {
+                        invalid_value: 0x2000_0000
+                    }),
+                    FieldNumber(0x1FFF_FFFF).try_get_next_unreserved()
                 );
             }
         }
     }
 
+    proptest! {
+        #[test]
+        #[allow(deprecated)]
+        fn get_next_unreserved(value in 1..FieldNumber::MAX_ALLOWED_U32) {
+            // matches its replacement
+            prop_assert_eq!(
+                FieldNumber(value).try_get_next_unreserved(),
+                Ok(FieldNumber(value).get_next_unreserved())
+            );
+        }
+    }
+
     #[test]
+    #[allow(deprecated)]
     #[should_panic(expected = "There is no field number after the maximum '536870911'.")]
     fn get_next_unreserved_max() {
         // no field number follows the maximum
