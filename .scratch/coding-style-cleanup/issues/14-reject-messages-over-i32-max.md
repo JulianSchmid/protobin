@@ -8,22 +8,36 @@ Today the length phase tracks sizes in `i32` without checks:
 - Every `cur_len += ...` in `MsgLenBuilder`, `MsgLenPackedScribe` and `MsgLenBuilder::end_len_area` overflows once the total passes `i32::MAX`. Debug builds panic with "attempt to add with overflow". Release builds wrap.
 - The serialization phase then writes the wrapped, negative length with `add_var_int32`, a 10-byte varint, so the output is silently wrong.
 
-**Open question (needs a decision before implementation):** where does the error surface?
+**Decision (triaged 2026-10-11):** the error surfaces from the length phase's `end()`, and the work lands on the `coding-style-cleanup` branch as part of 0.7.0.
 
-1. **The length phase's `end()` returns a `Result`.** The length builder keeps adding with checked arithmetic and records the first overflow. `MsgScribe::end` for `MsgLenBuilder` then returns `Err` instead of a `MsgSerBuilder`. The `add_*` signatures and chaining stay as they are; only the `End` type and the code handling it change. The serialization phase never sees an invalid length.
-2. **Every length-phase `add_*` returns a `Result`**, like `add_display_str` already does. The error surfaces at the offending field, but every `MsgScribe` method signature changes and chaining with `.` breaks.
-3. **Widen the internal lengths to `u64`** and check against the 2 GiB limit once, in `end()`. This is the same API change as option 1, with simpler arithmetic but bigger `lens` entries.
+- `MsgScribe::End` for `MsgLenBuilder` becomes `Result<MsgSerBuilder<'a>, EncodeError>`. The serialization phase's `End` stays `&'a [u8]`.
+- The length phase never panics or wraps on oversized input. It records the first overflow and keeps going, and `end()` returns it as an error.
+- The `add_*`, `start_*` and `end_*` signatures and their `.` chaining are unchanged, so generic `fn ser<S: MsgScribe>(..) -> S::End` code compiles as before. Callers add one `?` between the phases:
 
-Option 1 changes the API least. Whichever option is chosen, the error gets its own type, e.g. `EncodeError::MsgTooLong { len }` in `builders/encode_error.rs`, with the usual `Display`, `Error`, derive and test requirements.
+  ```rust
+  let step2 = ser_person(&person, builder.start(None))?;
+  let bytes = ser_person(&person, step2);
+  ```
+
+- Every length written to `MsgBuilder.lens` fits in `i32`, so the serialization phase stays infallible.
+
+Rejected: every `add_*` returning a `Result`. Since `MsgScribe` is shared by both phases, that would put a `?` on every line of user code and make the infallible serialization phase return `Result`s.
+
+**Left to the implementer:**
+
+- **How the length phase detects the overflow:** checked `i32` arithmetic, or a wider accumulator (`i64`) checked whenever a sub-message or packed field ends and in `end()`. `lens` can keep its `i32` entries either way. Keep the per-field hot path cheap. If the choice is performance-motivated, back it with numbers.
+- **The error type:** a new `EncodeError` in `builders/encode_error.rs`, following the coding style's error rules (`Display`, `core::error::Error`, derives, values in field-shaped variants, and `debug` / `clone_eq_hash` / `fmt` / `source` tests). It should carry what a user needs to find the culprit, e.g. the field number of the innermost sub-message or packed field that overflowed (none for the top-level message) and the length that was reached.
 
 **Testing hint:** the length phase never touches the data, so tests can reach 2 GiB without allocating it by adding the same 1 MiB slice 2048 times.
 
-**Blocked by:** None (can start immediately). Coordinate with 13, which reserves the length phase's total before serialization.
+**Blocked by:** None (can start immediately). Do this before 13, so that 13 reserves a total length that is already known to be valid.
 
-**Status:** needs-triage
+**Status:** ready-for-agent
 
-- [ ] The open question above is decided and recorded in this ticket
-- [ ] No length-phase method panics or wraps for messages, sub-messages or packed fields longer than `i32::MAX` bytes; encoding them returns the new error
+- [ ] `MsgLenBuilder`'s `MsgScribe::End` is `Result<MsgSerBuilder<'a>, EncodeError>`, and `MsgScribe::End`'s docs describe both phases
+- [ ] No length-phase method panics or wraps for messages, sub-messages or packed fields longer than `i32::MAX` bytes; the length phase's `end()` returns the error instead
 - [ ] Each overflow path (string, bytes, `Display`, `Debug`, packed elements, nested sub-message prefixes) has a test checking the exact error
-- [ ] `Changelog.md` under `## 0.7.0` records the API change under "Changed" (marked **Breaking**) and the overflow under "Fixed"
+- [ ] `EncodeError` follows the coding style's error rules, with its own file and tests
+- [ ] The README examples, `examples/` and the "Two-phase encoding" section of `CLAUDE.md` use the new `end()` signature
+- [ ] `Changelog.md` under `## 0.7.0` records the `End` type change under "Changed" (marked **Breaking**) and the overflow under "Fixed"
 - [ ] All CI checks pass
