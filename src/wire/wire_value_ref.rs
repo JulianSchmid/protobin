@@ -45,7 +45,7 @@ impl<'a> WireValueRef<'a> {
     pub fn try_as_bool(&self) -> Result<bool, WireValueIntoError> {
         use WireValueIntoError::*;
         if let WireValueRef::VarInt(v) = &self {
-            v.try_as_bool().ok_or(VarIntValueTooBigFor32Bit(v.raw()))
+            v.try_as_bool().ok_or(VarIntValueInvalidBool(v.raw()))
         } else {
             Err(UnexpectedType {
                 expected: WireType::VarInt,
@@ -272,6 +272,19 @@ impl<'a> WireValueRef<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn try_as_bool(bad_value in 2u64..) {
+            // value other than 0 or 1
+            let v = WireValueRef::VarInt(WireVarInt::from_raw(bad_value));
+            prop_assert_eq!(
+                Err(WireValueIntoError::VarIntValueInvalidBool(bad_value)),
+                v.try_as_bool()
+            );
+        }
+    }
 
     #[test]
     fn fixed_size_unexpected_type() {

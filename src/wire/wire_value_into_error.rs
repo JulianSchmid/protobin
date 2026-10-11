@@ -16,6 +16,9 @@ pub enum WireValueIntoError {
 
     /// Error if the value is too big for a 32 bit value.
     VarIntValueTooBigFor32Bit(u64),
+
+    /// Error if the value is neither `0` nor `1` and therefore not a `bool`.
+    VarIntValueInvalidBool(u64),
 }
 
 impl fmt::Display for WireValueIntoError {
@@ -29,6 +32,10 @@ impl fmt::Display for WireValueIntoError {
             VarIntValueTooBigFor32Bit(value) => write!(
                 f,
                 "Wire value conversion error: Varint value '{value}' is too big for 32 bits."
+            ),
+            VarIntValueInvalidBool(value) => write!(
+                f,
+                "Wire value conversion error: Varint value '{value}' is not a valid bool (0 or 1)."
             ),
         }
     }
@@ -93,6 +100,10 @@ mod test {
             "Wire value conversion error: Varint value '4294967296' is too big for 32 bits.",
             format!("{}", VarIntValueTooBigFor32Bit(1 << 32))
         );
+        assert_eq!(
+            "Wire value conversion error: Varint value '2' is not a valid bool (0 or 1).",
+            format!("{}", VarIntValueInvalidBool(2))
+        );
     }
 
     #[test]
@@ -104,6 +115,7 @@ mod test {
                 actual: WireType::I64,
             },
             VarIntValueTooBigFor32Bit(1 << 32),
+            VarIntValueInvalidBool(2),
         ];
         for v in values {
             assert!(v.source().is_none());
