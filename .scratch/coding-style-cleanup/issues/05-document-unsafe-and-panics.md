@@ -6,9 +6,16 @@ API misuse is the only allowed panic: unbalanced or mismatched `start_*`/`end_*`
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Every `unsafe` block has a `// SAFETY:` comment naming the check that makes it sound
-- [ ] Every method that can panic has a `# Panics` doc section, including the `MsgScribe` / `PackedScribe` trait methods whose implementations panic on misuse
-- [ ] `clippy::undocumented_unsafe_blocks` and `clippy::missing_panics_doc` are enabled at crate level
-- [ ] All CI checks pass
+- [x] Every `unsafe` block has a `// SAFETY:` comment naming the check that makes it sound
+- [x] Every method that can panic has a `# Panics` doc section, including the `MsgScribe` / `PackedScribe` trait methods whose implementations panic on misuse
+- [x] `clippy::undocumented_unsafe_blocks` and `clippy::missing_panics_doc` are enabled at crate level
+- [x] All CI checks pass
+
+## Comments
+
+- `PackedScribe` has no `# Panics` sections, as none of its implementations panic on misuse. The `start_packed` / `end_packed` panics live on `MsgScribe`.
+- `FieldNumber::get_next_unreserved` now panics on `FieldNumber::MAX_ALLOWED_U32` instead of returning the invalid `FieldNumber(0x20000000)`. The coding style's list of allowed panics doesn't name this case. Either add "asking for a field number after the maximum" to that list, or replace the method with a `try_` variant.
+- `MsgBuilder::start` skips a `num_len_values` hint that can't be reserved (`try_reserve`) instead of panicking.
+- Still open, no ticket yet: `MsgLenBuilder` and `MsgLenPackedScribe` add lengths with unchecked `i32` arithmetic and `len() as i32` casts. A message over `i32::MAX` bytes panics on overflow in debug builds and encodes wrong lengths in release builds. That breaks the "input data never panics or produces wrong bytes" hard rule, so it needs an error rather than a `# Panics` section.
