@@ -35,13 +35,16 @@ impl FieldNumber {
     /// Convert an [`u32`] to a field number without checking it is smaller
     /// or equal [`FieldNumber::MAX_ALLOWED_U32`] and at least `1`.
     ///
+    /// # Panics
+    ///
+    /// With debug assertions enabled, panics if `value` is `0` or greater
+    /// than [`FieldNumber::MAX_ALLOWED_U32`].
+    ///
     /// # Safety
     ///
     /// The caller must ensure the provided value is smaller or equal
     /// [`FieldNumber::MAX_ALLOWED_U32`] and at least `1`. If not undefined
     /// behavior will occur when the field number is serialized.
-    /// In debug an assertion will panic the program if a value greater then
-    /// [`FieldNumber::MAX_ALLOWED_U32`] is passed as argument.
     #[inline]
     pub const unsafe fn from_u32_unchecked(value: u32) -> FieldNumber {
         debug_assert!(value <= (u32::MAX >> 3));

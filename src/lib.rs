@@ -1,5 +1,5 @@
 #![doc = include_str!("../README.md")]
-#![warn(clippy::undocumented_unsafe_blocks)]
+#![warn(clippy::undocumented_unsafe_blocks, clippy::missing_panics_doc)]
 
 /// Datatypes for message building.
 pub mod builders;

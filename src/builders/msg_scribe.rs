@@ -87,17 +87,41 @@ pub trait MsgScribe {
     /// (until the matching [`end_msg`](Self::end_msg)) belong to the
     /// sub-message. Must be paired with `end_msg` using the same
     /// `field_number`.
+    ///
+    /// # Panics
+    ///
+    /// Panics in the serialization phase if the length phase's `start_msg` /
+    /// `start_packed` call at the same position used a different
+    /// `field_number`, or if the length phase made fewer such calls.
     fn start_msg(&mut self, field_number: FieldNumber) -> &mut Self;
     /// Ends a nested sub-message field previously started with
     /// [`start_msg`](Self::start_msg).
+    ///
+    /// # Panics
+    ///
+    /// Panics in the length phase if no sub-message or packed field is open,
+    /// or if the innermost open one is not a sub-message started with the same
+    /// `field_number`.
     fn end_msg(&mut self, field_number: FieldNumber) -> &mut Self;
 
     /// Begins a packed repeated field and returns a [`PackedScribe`] that can
     /// be used to add the packed elements. Must be paired with
     /// [`end_packed`](Self::end_packed) using the same `field_number`.
+    ///
+    /// # Panics
+    ///
+    /// Panics in the serialization phase if the length phase's `start_msg` /
+    /// `start_packed` call at the same position used a different
+    /// `field_number`, or if the length phase made fewer such calls.
     fn start_packed<'a>(&'a mut self, field_number: FieldNumber) -> Self::Packed<'a>;
     /// Ends a packed repeated field previously started with
     /// [`start_packed`](Self::start_packed).
+    ///
+    /// # Panics
+    ///
+    /// Panics in the length phase if no sub-message or packed field is open,
+    /// or if the innermost open one is not a packed field started with the same
+    /// `field_number`.
     fn end_packed(&mut self, field_number: FieldNumber) -> &mut Self;
 
     /// Finishes the current encoding phase and returns the phase result.
@@ -106,6 +130,11 @@ pub trait MsgScribe {
     /// [`MsgSerBuilder`](super::MsgSerBuilder) to begin the serialization
     /// phase. For [`MsgSerBuilder`](super::MsgSerBuilder) this returns the
     /// final encoded byte slice.
+    ///
+    /// # Panics
+    ///
+    /// Panics in the length phase if a sub-message or packed field was
+    /// started but not ended.
     fn end(self) -> Self::End;
 
     // TODO add packed method with slice passing

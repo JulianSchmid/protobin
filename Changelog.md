@@ -8,6 +8,7 @@
 - `WireValueIntoError` implements `Display` and `core::error::Error`.
 - `FieldNumberIntoError` implements `Display` and `core::error::Error`, and `FieldNumberIntoError::invalid_value()` returns the value that was rejected.
 - `WireValueRef::try_as_fixed32`, `try_as_sfixed32`, `try_as_float`, `try_as_fixed64`, `try_as_sfixed64` and `try_as_double`, following the `try_` prefix of the other fallible conversions.
+- `# Panics` sections on the methods that panic on API misuse, including the `MsgScribe` methods: unbalanced or mismatched `start_*` / `end_*` calls in the length phase, and `start_*` calls in the serialization phase that don't match the length phase.
 
 ### Changed
 

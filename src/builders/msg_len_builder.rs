@@ -226,6 +226,11 @@ impl<'a> MsgLenBuilder<'a> {
     /// with [`start_msg_field`](Self::start_msg_field). The accumulated byte
     /// length of the sub-message is stored so that the serialization phase can
     /// emit the correct varint length prefix.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no sub-message or packed field is open, or if the innermost
+    /// open one is not a sub-message started with the same `field_number`.
     pub fn end_msg_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_len_area(field_number, LenStackType::Msg)
     }
@@ -247,6 +252,11 @@ impl<'a> MsgLenBuilder<'a> {
     /// with [`start_packed_field`](Self::start_packed_field). The accumulated
     /// byte length is stored so that the serialization phase can emit the
     /// correct varint length prefix.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no sub-message or packed field is open, or if the innermost
+    /// open one is not a packed field started with the same `field_number`.
     pub fn end_packed_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_len_area(field_number, LenStackType::Packed)
     }

@@ -223,6 +223,12 @@ impl<'a> MsgSerBuilder<'a> {
     /// wire-type tag and the pre-calculated varint length prefix (determined
     /// during the length phase) into the buffer. Subsequent field calls will
     /// write the sub-message content directly after the prefix.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the length phase's `start_msg_field` / `start_packed_field`
+    /// call at the same position used a different `field_number`, or if the
+    /// length phase made fewer such calls.
     pub fn start_msg_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.start_len_area(field_number)
     }
@@ -231,6 +237,12 @@ impl<'a> MsgSerBuilder<'a> {
     /// wire-type tag and the pre-calculated varint length prefix into the
     /// buffer and returns a [`MsgSerPackedScribe`] that can be used to
     /// serialize the packed elements.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the length phase's `start_msg_field` / `start_packed_field`
+    /// call at the same position used a different `field_number`, or if the
+    /// length phase made fewer such calls.
     pub fn start_packed_field<'b>(
         &'b mut self,
         field_number: FieldNumber,
