@@ -45,9 +45,11 @@ impl MsgBuilder {
         self.encoder.buf.clear();
 
         // reserve enough memory in case we get a upper limit of len values
+        // (only a hint, so a reservation that fails is skipped and the
+        // buffers grow as needed instead)
         if let Some(num_len_values) = num_len_values {
-            self.lens.reserve(num_len_values);
-            self.len_stack.reserve(num_len_values);
+            let _ = self.lens.try_reserve(num_len_values);
+            let _ = self.len_stack.try_reserve(num_len_values);
         }
 
         // return the len builder for step 1
@@ -70,4 +72,40 @@ pub(crate) struct LenStackEntry {
 pub(crate) enum LenStackType {
     Msg,
     Packed,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn start() {
+        // encodes `1: { 2: 150 }` after starting with the given hint
+        fn encode(num_len_values: Option<usize>) -> Vec<u8> {
+            let mut builder = MsgBuilder::new();
+            let mut len = builder.start(num_len_values);
+            len.start_msg(FieldNumber(1))
+                .add_uint32(FieldNumber(2), 150)
+                .end_msg(FieldNumber(1));
+            let mut ser = len.end();
+            ser.start_msg(FieldNumber(1))
+                .add_uint32(FieldNumber(2), 150)
+                .end_msg(FieldNumber(1));
+            ser.end().to_vec()
+        }
+        let expected = [0x0A, 0x03, 0x10, 0x96, 0x01];
+
+        {
+            // no hint
+            assert_eq!(expected, encode(None)[..]);
+        }
+        {
+            // hint that can be reserved
+            assert_eq!(expected, encode(Some(4))[..]);
+        }
+        {
+            // hint too big to reserve is ignored
+            assert_eq!(expected, encode(Some(usize::MAX))[..]);
+        }
+    }
 }

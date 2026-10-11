@@ -2,7 +2,7 @@
 name = "protobin"
 version = "0.6.0"
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.81"
 authors = ["Julian Schmid <info@julianschmid.name>"]
 repository = "https://github.com/JulianSchmid/protobin"
 description = "A rust crate with basic functions to encode & decode Protocol Buffer binary messages."

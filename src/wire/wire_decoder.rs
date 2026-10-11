@@ -21,7 +21,7 @@ impl<'a> WireDecoder<'a> {
                 return Ok(result);
             }
         }
-        Err(DecodeError::UnexpectedContinuationBit)
+        Err(DecodeError::UnexpectedContinuationBit { max_bytes: 5 })
     }
 
     /// Read a VARINT uint64 from the `data` slice and move `data`
@@ -35,7 +35,7 @@ impl<'a> WireDecoder<'a> {
                 return Ok(result);
             }
         }
-        Err(DecodeError::UnexpectedContinuationBit)
+        Err(DecodeError::UnexpectedContinuationBit { max_bytes: 10 })
     }
 
     /// Read fixed sized [`u32`] from the `data` slice and move `data`
@@ -65,9 +65,15 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_byte(&mut self) -> Result<u8, DecodeError> {
         if self.data.is_empty() {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: 1,
+                remaining: 0,
+            })
         } else {
+            // SAFETY: the `is_empty` check above guarantees at least 1 byte.
             let value = unsafe { *self.data.get_unchecked(0) };
+            // SAFETY: the `is_empty` check above guarantees at least 1 byte, so
+            // the remaining `len - 1` bytes after it lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(1), self.data.len() - 1)
             };
@@ -78,8 +84,12 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_4bytes(&mut self) -> Result<[u8; 4], DecodeError> {
         if self.data.len() < 4 {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: 4,
+                remaining: self.data.len(),
+            })
         } else {
+            // SAFETY: the length check above guarantees at least 4 bytes.
             let result = unsafe {
                 [
                     *self.data.get_unchecked(0),
@@ -88,6 +98,8 @@ impl<'a> WireDecoder<'a> {
                     *self.data.get_unchecked(3),
                 ]
             };
+            // SAFETY: the length check above guarantees at least 4 bytes, so
+            // the remaining `len - 4` bytes after them lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(4), self.data.len() - 4)
             };
@@ -98,8 +110,12 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_8bytes(&mut self) -> Result<[u8; 8], DecodeError> {
         if self.data.len() < 8 {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: 8,
+                remaining: self.data.len(),
+            })
         } else {
+            // SAFETY: the length check above guarantees at least 8 bytes.
             let result = unsafe {
                 [
                     *self.data.get_unchecked(0),
@@ -112,6 +128,8 @@ impl<'a> WireDecoder<'a> {
                     *self.data.get_unchecked(7),
                 ]
             };
+            // SAFETY: the length check above guarantees at least 8 bytes, so
+            // the remaining `len - 8` bytes after them lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(8), self.data.len() - 8)
             };
@@ -122,9 +140,15 @@ impl<'a> WireDecoder<'a> {
     #[inline]
     pub fn take_nbyte(&mut self, n: usize) -> Result<&'a [u8], DecodeError> {
         if self.data.len() < n {
-            Err(DecodeError::Len)
+            Err(DecodeError::Len {
+                required: n,
+                remaining: self.data.len(),
+            })
         } else {
+            // SAFETY: the length check above guarantees at least `n` bytes.
             let result = unsafe { core::slice::from_raw_parts(self.data.as_ptr(), n) };
+            // SAFETY: the length check above guarantees at least `n` bytes, so
+            // the remaining `len - n` bytes after them lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(n), self.data.len() - n)
             };
@@ -135,8 +159,95 @@ impl<'a> WireDecoder<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::wire::*;
+    use crate::{decode::*, wire::*};
     use proptest::prelude::*;
+
+    #[test]
+    fn read_var_uint32() {
+        // continuation bit still set in the 5th byte
+        {
+            let mut reader = WireDecoder::new(&[0xff; 6]);
+            assert_eq!(
+                Err(DecodeError::UnexpectedContinuationBit { max_bytes: 5 }),
+                reader.read_var_uint32()
+            );
+        }
+    }
+
+    #[test]
+    fn read_var_uint64() {
+        // continuation bit still set in the 10th byte
+        {
+            let mut reader = WireDecoder::new(&[0xff; 11]);
+            assert_eq!(
+                Err(DecodeError::UnexpectedContinuationBit { max_bytes: 10 }),
+                reader.read_var_uint64()
+            );
+        }
+    }
+
+    #[test]
+    fn take_byte() {
+        // not enough data
+        {
+            let mut reader = WireDecoder::new(&[]);
+            assert_eq!(
+                Err(DecodeError::Len {
+                    required: 1,
+                    remaining: 0
+                }),
+                reader.take_byte()
+            );
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn take_4bytes(data in proptest::collection::vec(any::<u8>(), 0..4)) {
+            // not enough data
+            let mut reader = WireDecoder::new(&data);
+            prop_assert_eq!(
+                Err(DecodeError::Len {
+                    required: 4,
+                    remaining: data.len()
+                }),
+                reader.take_4bytes()
+            );
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn take_8bytes(data in proptest::collection::vec(any::<u8>(), 0..8)) {
+            // not enough data
+            let mut reader = WireDecoder::new(&data);
+            prop_assert_eq!(
+                Err(DecodeError::Len {
+                    required: 8,
+                    remaining: data.len()
+                }),
+                reader.take_8bytes()
+            );
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn take_nbyte(
+            data in proptest::collection::vec(any::<u8>(), 0..16),
+            missing in 1usize..16
+        ) {
+            // not enough data
+            let mut reader = WireDecoder::new(&data);
+            prop_assert_eq!(
+                Err(DecodeError::Len {
+                    required: data.len() + missing,
+                    remaining: data.len()
+                }),
+                reader.take_nbyte(data.len() + missing)
+            );
+        }
+    }
 
     proptest! {
         #[test]

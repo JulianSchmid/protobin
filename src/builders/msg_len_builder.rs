@@ -128,17 +128,17 @@ impl<'a> MsgLenBuilder<'a> {
     }
 
     /// Adds the byte length of a protobuf `string` field whose content is
-    /// produced by the [`std::fmt::Display`] implementation of `value`.
+    /// produced by the [`core::fmt::Display`] implementation of `value`.
     ///
-    /// The length is determined by a byte-counting [`std::fmt::Write`] adapter
+    /// The length is determined by a byte-counting [`core::fmt::Write`] adapter
     /// that never allocates, using the same calculation as
     /// [`add_string_field`](Self::add_string_field) afterwards.
     pub fn add_display_str_field(
         &mut self,
         field_number: FieldNumber,
-        value: &dyn std::fmt::Display,
-    ) -> Result<&mut Self, std::fmt::Error> {
-        use std::fmt::Write;
+        value: &dyn core::fmt::Display,
+    ) -> Result<&mut Self, core::fmt::Error> {
+        use core::fmt::Write;
         let mut counter = FmtByteCounter(0);
         write!(&mut counter, "{}", value)?;
         let len = counter.0;
@@ -150,17 +150,17 @@ impl<'a> MsgLenBuilder<'a> {
     }
 
     /// Adds the byte length of a protobuf `string` field whose content is
-    /// produced by the [`std::fmt::Debug`] implementation of `value`.
+    /// produced by the [`core::fmt::Debug`] implementation of `value`.
     ///
-    /// The length is determined by a byte-counting [`std::fmt::Write`] adapter
+    /// The length is determined by a byte-counting [`core::fmt::Write`] adapter
     /// that never allocates, using the same calculation as
     /// [`add_string_field`](Self::add_string_field) afterwards.
     pub fn add_debug_str_field(
         &mut self,
         field_number: FieldNumber,
-        value: &dyn std::fmt::Debug,
-    ) -> Result<&mut Self, std::fmt::Error> {
-        use std::fmt::Write;
+        value: &dyn core::fmt::Debug,
+    ) -> Result<&mut Self, core::fmt::Error> {
+        use core::fmt::Write;
         let mut counter = FmtByteCounter(0);
         write!(&mut counter, "{:?}", value)?;
         let len = counter.0;
@@ -226,6 +226,11 @@ impl<'a> MsgLenBuilder<'a> {
     /// with [`start_msg_field`](Self::start_msg_field). The accumulated byte
     /// length of the sub-message is stored so that the serialization phase can
     /// emit the correct varint length prefix.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no sub-message or packed field is open, or if the innermost
+    /// open one is not a sub-message started with the same `field_number`.
     pub fn end_msg_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_len_area(field_number, LenStackType::Msg)
     }
@@ -247,6 +252,11 @@ impl<'a> MsgLenBuilder<'a> {
     /// with [`start_packed_field`](Self::start_packed_field). The accumulated
     /// byte length is stored so that the serialization phase can emit the
     /// correct varint length prefix.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no sub-message or packed field is open, or if the innermost
+    /// open one is not a packed field started with the same `field_number`.
     pub fn end_packed_field(&mut self, field_number: FieldNumber) -> &mut Self {
         self.end_len_area(field_number, LenStackType::Packed)
     }
@@ -343,8 +353,8 @@ impl<'a> MsgScribe for MsgLenBuilder<'a> {
     fn add_display_str(
         &mut self,
         field_number: FieldNumber,
-        value: &dyn std::fmt::Display,
-    ) -> Result<&mut Self, std::fmt::Error> {
+        value: &dyn core::fmt::Display,
+    ) -> Result<&mut Self, core::fmt::Error> {
         self.add_display_str_field(field_number, value)
     }
 
@@ -352,8 +362,8 @@ impl<'a> MsgScribe for MsgLenBuilder<'a> {
     fn add_debug_str(
         &mut self,
         field_number: FieldNumber,
-        value: &dyn std::fmt::Debug,
-    ) -> Result<&mut Self, std::fmt::Error> {
+        value: &dyn core::fmt::Debug,
+    ) -> Result<&mut Self, core::fmt::Error> {
         self.add_debug_str_field(field_number, value)
     }
 
@@ -390,12 +400,12 @@ impl<'a> MsgScribe for MsgLenBuilder<'a> {
     }
 }
 
-/// A [`std::fmt::Write`] implementation that only counts the number of
+/// A [`core::fmt::Write`] implementation that only counts the number of
 /// bytes written without storing them.
 struct FmtByteCounter(usize);
 
-impl std::fmt::Write for FmtByteCounter {
-    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+impl core::fmt::Write for FmtByteCounter {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.0 += s.len();
         Ok(())
     }
@@ -407,7 +417,7 @@ mod tests {
     use crate::builders::MsgBuilder;
 
     /// Helper to get `cur_len` after calling `add_display_str_field`.
-    fn display_str_cur_len(field_number: FieldNumber, value: &dyn std::fmt::Display) -> i32 {
+    fn display_str_cur_len(field_number: FieldNumber, value: &dyn core::fmt::Display) -> i32 {
         let mut b = MsgBuilder::new();
         let mut len = b.start(None);
         len.add_display_str_field(field_number, value).unwrap();
@@ -415,7 +425,7 @@ mod tests {
     }
 
     /// Helper to get `cur_len` after calling `add_debug_str_field`.
-    fn debug_str_cur_len(field_number: FieldNumber, value: &dyn std::fmt::Debug) -> i32 {
+    fn debug_str_cur_len(field_number: FieldNumber, value: &dyn core::fmt::Debug) -> i32 {
         let mut b = MsgBuilder::new();
         let mut len = b.start(None);
         len.add_debug_str_field(field_number, value).unwrap();
@@ -444,8 +454,8 @@ mod tests {
         // empty Display output matches empty string
         {
             struct Empty;
-            impl std::fmt::Display for Empty {
-                fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl core::fmt::Display for Empty {
+                fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                     Ok(())
                 }
             }
@@ -470,9 +480,9 @@ mod tests {
         // failing Display impl propagates the error
         {
             struct Failing;
-            impl std::fmt::Display for Failing {
-                fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    Err(std::fmt::Error)
+            impl core::fmt::Display for Failing {
+                fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    Err(core::fmt::Error)
                 }
             }
             let mut b = MsgBuilder::new();
@@ -504,9 +514,9 @@ mod tests {
         // failing Debug impl propagates the error
         {
             struct Failing;
-            impl std::fmt::Debug for Failing {
-                fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    Err(std::fmt::Error)
+            impl core::fmt::Debug for Failing {
+                fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    Err(core::fmt::Error)
                 }
             }
             let mut b = MsgBuilder::new();

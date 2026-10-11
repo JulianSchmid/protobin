@@ -4,11 +4,11 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The crate manifest declares `rust-version` 1.81
-- [ ] The CI MSRV job builds with toolchain 1.81, and its job name says so
-- [ ] `cargo +1.81 build` succeeds locally
-- [ ] The MSRV constraint in `CLAUDE.md` says 1.81, gives `core::error::Error` as the reason, and no longer cites the 1.65 GAT / `let ... else` rationale
-- [ ] `Changelog.md` has a `## 0.7.0` heading (create it if missing), with the MSRV raise recorded under "Changed"
-- [ ] All CI checks pass
+- [x] The crate manifest declares `rust-version` 1.81
+- [x] The CI MSRV job builds with toolchain 1.81, and its job name says so
+- [x] `cargo +1.81 build` succeeds locally
+- [x] The MSRV constraint in `CLAUDE.md` says 1.81, gives `core::error::Error` as the reason, and no longer cites the 1.65 GAT / `let ... else` rationale
+- [x] `Changelog.md` has a `## 0.7.0` heading (create it if missing), with the MSRV raise recorded under "Changed"
+- [x] All CI checks pass

@@ -4,11 +4,11 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The six `try_as_*` methods exist with the old behaviour and docs
-- [ ] The six old names forward to them and are marked deprecated since `0.7.0`, with a note naming the replacement
-- [ ] The crate's own code, README, examples and tests use the new names, so the build emits no deprecation warnings
-- [ ] A test calls each deprecated name (allowing the deprecation lint) and checks that it still matches its replacement
-- [ ] `Changelog.md` under `## 0.7.0` lists the new methods under "Added" and the old names under "Deprecated"
-- [ ] All CI checks pass
+- [x] The six `try_as_*` methods exist with the old behaviour and docs
+- [x] The six old names forward to them and are marked deprecated since `0.7.0`, with a note naming the replacement
+- [x] The crate's own code, README, examples and tests use the new names, so the build emits no deprecation warnings
+- [x] A test calls each deprecated name (allowing the deprecation lint) and checks that it still matches its replacement
+- [x] `Changelog.md` under `## 0.7.0` lists the new methods under "Added" and the old names under "Deprecated"
+- [x] All CI checks pass

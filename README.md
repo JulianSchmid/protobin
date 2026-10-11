@@ -298,12 +298,12 @@ fn dump(data: &[u8]) {
 | `sint64` | VarInt (zig-zag) | `add_sint64` | `try_as_sint64` |
 | `bool` | VarInt | `add_bool` | `try_as_bool` |
 | `enum` | VarInt | `add_enum` | `try_as_int32` |
-| `fixed32` | I32 | `add_fixed32` | `as_fixed32` |
-| `sfixed32` | I32 | `add_sfixed32` | `as_sfixed32` |
-| `float` | I32 | `add_float` | `as_float` |
-| `fixed64` | I64 | `add_fixed64` | `as_fixed64` |
-| `sfixed64` | I64 | `add_sfixed64` | `as_sfixed64` |
-| `double` | I64 | `add_double` | `as_double` |
+| `fixed32` | I32 | `add_fixed32` | `try_as_fixed32` |
+| `sfixed32` | I32 | `add_sfixed32` | `try_as_sfixed32` |
+| `float` | I32 | `add_float` | `try_as_float` |
+| `fixed64` | I64 | `add_fixed64` | `try_as_fixed64` |
+| `sfixed64` | I64 | `add_sfixed64` | `try_as_sfixed64` |
+| `double` | I64 | `add_double` | `try_as_double` |
 | `string` | LEN | `add_string` | `try_as_string` |
 | `bytes` | LEN | `add_bytes` | `as_bytes` |
 | embedded message | LEN | `start_msg` / `end_msg` | `as_sub_msg` |

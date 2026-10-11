@@ -12,16 +12,28 @@ cargo test                                   # unit tests, proptests and README 
 cargo fmt -- --check
 cargo clippy -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
-cargo +1.65 build                            # MSRV check (build only; dev-deps need a newer toolchain)
+cargo +1.81 build                            # MSRV check (build only; dev-deps need a newer toolchain)
 ```
 
 Run a subset of tests with a name filter, e.g. `cargo test msg_ser_builder` or `cargo test --doc`.
+
+Coverage (not run in CI) uses `cargo-llvm-cov`, a global tool rather than a crate dependency:
+
+```sh
+cargo install cargo-llvm-cov                                 # one-time setup
+rustup component add llvm-tools-preview                      # one-time setup
+rustup component add llvm-tools-preview --toolchain nightly  # one-time setup, for the branch variant
+cargo llvm-cov --html                                        # line and region coverage, report in target/llvm-cov/html/index.html
+cargo +nightly llvm-cov --branch --doctests --html           # adds branch coverage and the README doctests (nightly only)
+```
+
+The coding style requires every branch and error path to be tested, so check branches with the nightly variant. Branch coverage counts only `if`, `&&` and `||` conditions; untested `match` arms show up only as missed regions. `cargo llvm-cov report` re-reads the last run's data, so pass it the same toolchain and flags as that run. Proptests make the numbers vary slightly from run to run.
 
 Examples: `cargo run --example gen_test_msg -- out.proto out.bin` (also `gen_complex_msg`) writes a `.proto` schema plus an encoded message for checking against external protobuf tooling. `cargo run --example print_wire_types -- out.bin` dumps the records of any protobuf binary.
 
 ## Constraints
 
-- **MSRV is Rust 1.65** (`rust-version` in `Cargo.toml`). `MsgScribe::Packed<'b>` is a generic associated type and the builders use `let ... else`, both of which only just made it into 1.65. Don't use newer language or std features.
+- **MSRV is Rust 1.81** (`rust-version` in `Cargo.toml`). 1.81 is the first release with `core::error::Error`, which `docs/coding-style.md` requires every error type to implement. Don't use newer language or std features.
 - **No runtime dependencies.** `proptest` is the only dev-dependency.
 - **`README.md` is the crate-level doc** (`#![doc = include_str!("../README.md")]` in `src/lib.rs`). Its Rust code blocks run as doctests, with `#`-prefixed lines hidden, and its intra-doc links (e.g. `` [`MsgScribe`](builders::MsgScribe) ``) must resolve or the `cargo doc -D warnings` job fails.
 - Commit new files under `proptest-regressions/`, since proptest replays those seeds on every run.
@@ -63,7 +75,7 @@ Issues and specs live as local markdown files under `.scratch/<feature>/`. See `
 
 ### Triage labels
 
-The default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
+The default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) plus `done` for finished tickets, recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 

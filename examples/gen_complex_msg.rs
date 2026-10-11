@@ -1,5 +1,5 @@
 use protobin::builders::{MsgBuilder, MsgScribe};
-use std::{fs::File, i32, i64, io::Write, process::ExitCode, u32};
+use std::{fs::File, io::Write, process::ExitCode};
 
 const PROTO_FILE: &'static str = "
 syntax = \"proto3\";
