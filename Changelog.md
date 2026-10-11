@@ -5,6 +5,7 @@
 ### Added
 
 - `DecodeError` implements `Display`, `core::error::Error` and `Hash`.
+- `WireValueIntoError` implements `Display` and `core::error::Error`.
 
 ### Changed
 
