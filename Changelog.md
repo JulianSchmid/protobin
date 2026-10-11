@@ -25,6 +25,7 @@
 - **Breaking:** `WireValueRef::try_as_bool` returns the new `WireValueIntoError::VarIntValueInvalidBool` for varints other than `0` or `1`, instead of `VarIntValueTooBigFor32Bit`.
 - The fixed-size conversions on `WireValueRef` (`as_fixed32`, `as_double`, ..., now `try_as_fixed32`, `try_as_double`, ...) reported `WireType::VarInt` instead of `I32` / `I64` as the expected type in `WireValueIntoError::UnexpectedType`.
 - `FieldNumber::get_next_unreserved` panics when called on the maximum field number, as its documentation said, instead of returning the invalid field number `0x20000000`.
+- `MsgBuilder::start` no longer panics when `num_len_values` is too big to reserve. The hint is skipped instead.
 
 ## 0.6.0
 
