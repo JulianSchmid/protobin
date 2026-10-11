@@ -12,7 +12,7 @@ cargo test                                   # unit tests, proptests and README 
 cargo fmt -- --check
 cargo clippy -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
-cargo +1.65 build                            # MSRV check (build only; dev-deps need a newer toolchain)
+cargo +1.81 build                            # MSRV check (build only; dev-deps need a newer toolchain)
 ```
 
 Run a subset of tests with a name filter, e.g. `cargo test msg_ser_builder` or `cargo test --doc`.
@@ -21,7 +21,7 @@ Examples: `cargo run --example gen_test_msg -- out.proto out.bin` (also `gen_com
 
 ## Constraints
 
-- **MSRV is Rust 1.65** (`rust-version` in `Cargo.toml`). `MsgScribe::Packed<'b>` is a generic associated type and the builders use `let ... else`, both of which only just made it into 1.65. Don't use newer language or std features.
+- **MSRV is Rust 1.81** (`rust-version` in `Cargo.toml`). 1.81 is the first release with `core::error::Error`, which `docs/coding-style.md` requires every error type to implement. Don't use newer language or std features.
 - **No runtime dependencies.** `proptest` is the only dev-dependency.
 - **`README.md` is the crate-level doc** (`#![doc = include_str!("../README.md")]` in `src/lib.rs`). Its Rust code blocks run as doctests, with `#`-prefixed lines hidden, and its intra-doc links (e.g. `` [`MsgScribe`](builders::MsgScribe) ``) must resolve or the `cargo doc -D warnings` job fails.
 - Commit new files under `proptest-regressions/`, since proptest replays those seeds on every run.

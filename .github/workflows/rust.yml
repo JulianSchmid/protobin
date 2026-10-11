@@ -49,11 +49,12 @@ jobs:
         run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 
   msrv-build:
+    name: msrv-build (Rust 1.81)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.65
-      - name: Build (min Rust 1.65)
+          toolchain: "1.81"
+      - name: Build (min Rust 1.81)
         run: cargo build --verbose

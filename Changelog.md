@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0
+
+### Changed
+
+- Raised MSRV from `1.65` to `1.81`, so the error types can implement `core::error::Error`.
+
 ## 0.6.0
 
 ### Added
