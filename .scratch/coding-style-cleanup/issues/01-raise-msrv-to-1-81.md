@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] The crate manifest declares `rust-version` 1.81
 - [x] The CI MSRV job builds with toolchain 1.81, and its job name says so
