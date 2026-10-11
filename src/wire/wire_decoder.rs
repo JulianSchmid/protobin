@@ -70,7 +70,10 @@ impl<'a> WireDecoder<'a> {
                 remaining: 0,
             })
         } else {
+            // SAFETY: the `is_empty` check above guarantees at least 1 byte.
             let value = unsafe { *self.data.get_unchecked(0) };
+            // SAFETY: the `is_empty` check above guarantees at least 1 byte, so
+            // the remaining `len - 1` bytes after it lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(1), self.data.len() - 1)
             };
@@ -86,6 +89,7 @@ impl<'a> WireDecoder<'a> {
                 remaining: self.data.len(),
             })
         } else {
+            // SAFETY: the length check above guarantees at least 4 bytes.
             let result = unsafe {
                 [
                     *self.data.get_unchecked(0),
@@ -94,6 +98,8 @@ impl<'a> WireDecoder<'a> {
                     *self.data.get_unchecked(3),
                 ]
             };
+            // SAFETY: the length check above guarantees at least 4 bytes, so
+            // the remaining `len - 4` bytes after them lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(4), self.data.len() - 4)
             };
@@ -109,6 +115,7 @@ impl<'a> WireDecoder<'a> {
                 remaining: self.data.len(),
             })
         } else {
+            // SAFETY: the length check above guarantees at least 8 bytes.
             let result = unsafe {
                 [
                     *self.data.get_unchecked(0),
@@ -121,6 +128,8 @@ impl<'a> WireDecoder<'a> {
                     *self.data.get_unchecked(7),
                 ]
             };
+            // SAFETY: the length check above guarantees at least 8 bytes, so
+            // the remaining `len - 8` bytes after them lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(8), self.data.len() - 8)
             };
@@ -136,7 +145,10 @@ impl<'a> WireDecoder<'a> {
                 remaining: self.data.len(),
             })
         } else {
+            // SAFETY: the length check above guarantees at least `n` bytes.
             let result = unsafe { core::slice::from_raw_parts(self.data.as_ptr(), n) };
+            // SAFETY: the length check above guarantees at least `n` bytes, so
+            // the remaining `len - n` bytes after them lie within `data`.
             self.data = unsafe {
                 core::slice::from_raw_parts(self.data.as_ptr().add(n), self.data.len() - n)
             };
