@@ -171,7 +171,7 @@ impl<'a> WireValueRef<'a> {
     /// If the value is not a [`WireValueRef::I32`] `None` is
     /// returned instead.
     #[inline]
-    pub fn as_fixed32(&self) -> Result<u32, WireValueIntoError> {
+    pub fn try_as_fixed32(&self) -> Result<u32, WireValueIntoError> {
         use WireValueIntoError::*;
         if let WireValueRef::I32(v) = &self {
             Ok(v.as_fixed32())
@@ -188,7 +188,7 @@ impl<'a> WireValueRef<'a> {
     /// If the value is not a [`WireValueRef::I32`] `None` is
     /// returned instead.
     #[inline]
-    pub fn as_sfixed32(&self) -> Result<i32, WireValueIntoError> {
+    pub fn try_as_sfixed32(&self) -> Result<i32, WireValueIntoError> {
         use WireValueIntoError::*;
         if let WireValueRef::I32(v) = &self {
             Ok(v.as_sfixed32())
@@ -205,7 +205,7 @@ impl<'a> WireValueRef<'a> {
     /// If the value is not a [`WireValueRef::I32`] `None` is
     /// returned instead.
     #[inline]
-    pub fn as_float(&self) -> Result<f32, WireValueIntoError> {
+    pub fn try_as_float(&self) -> Result<f32, WireValueIntoError> {
         use WireValueIntoError::*;
         if let WireValueRef::I32(v) = &self {
             Ok(v.as_float())
@@ -222,7 +222,7 @@ impl<'a> WireValueRef<'a> {
     /// If the value is not a [`WireValueRef::I64`] `None` is
     /// returned instead.
     #[inline]
-    pub fn as_fixed64(&self) -> Result<u64, WireValueIntoError> {
+    pub fn try_as_fixed64(&self) -> Result<u64, WireValueIntoError> {
         use WireValueIntoError::*;
         if let WireValueRef::I64(v) = &self {
             Ok(v.as_fixed64())
@@ -239,7 +239,7 @@ impl<'a> WireValueRef<'a> {
     /// If the value is not a [`WireValueRef::I64`] `None` is
     /// returned instead.
     #[inline]
-    pub fn as_sfixed64(&self) -> Result<i64, WireValueIntoError> {
+    pub fn try_as_sfixed64(&self) -> Result<i64, WireValueIntoError> {
         use WireValueIntoError::*;
         if let WireValueRef::I64(v) = &self {
             Ok(v.as_sfixed64())
@@ -256,7 +256,7 @@ impl<'a> WireValueRef<'a> {
     /// If the value is not a [`WireValueRef::I64`] `None` is
     /// returned instead.
     #[inline]
-    pub fn as_double(&self) -> Result<f64, WireValueIntoError> {
+    pub fn try_as_double(&self) -> Result<f64, WireValueIntoError> {
         use WireValueIntoError::*;
         if let WireValueRef::I64(v) = &self {
             Ok(v.as_double())
@@ -266,6 +266,48 @@ impl<'a> WireValueRef<'a> {
                 actual: self.write_type(),
             })
         }
+    }
+
+    /// Deprecated name of [`WireValueRef::try_as_fixed32`].
+    #[deprecated(since = "0.7.0", note = "Use `try_as_fixed32` instead")]
+    #[inline]
+    pub fn as_fixed32(&self) -> Result<u32, WireValueIntoError> {
+        self.try_as_fixed32()
+    }
+
+    /// Deprecated name of [`WireValueRef::try_as_sfixed32`].
+    #[deprecated(since = "0.7.0", note = "Use `try_as_sfixed32` instead")]
+    #[inline]
+    pub fn as_sfixed32(&self) -> Result<i32, WireValueIntoError> {
+        self.try_as_sfixed32()
+    }
+
+    /// Deprecated name of [`WireValueRef::try_as_float`].
+    #[deprecated(since = "0.7.0", note = "Use `try_as_float` instead")]
+    #[inline]
+    pub fn as_float(&self) -> Result<f32, WireValueIntoError> {
+        self.try_as_float()
+    }
+
+    /// Deprecated name of [`WireValueRef::try_as_fixed64`].
+    #[deprecated(since = "0.7.0", note = "Use `try_as_fixed64` instead")]
+    #[inline]
+    pub fn as_fixed64(&self) -> Result<u64, WireValueIntoError> {
+        self.try_as_fixed64()
+    }
+
+    /// Deprecated name of [`WireValueRef::try_as_sfixed64`].
+    #[deprecated(since = "0.7.0", note = "Use `try_as_sfixed64` instead")]
+    #[inline]
+    pub fn as_sfixed64(&self) -> Result<i64, WireValueIntoError> {
+        self.try_as_sfixed64()
+    }
+
+    /// Deprecated name of [`WireValueRef::try_as_double`].
+    #[deprecated(since = "0.7.0", note = "Use `try_as_double` instead")]
+    #[inline]
+    pub fn as_double(&self) -> Result<f64, WireValueIntoError> {
+        self.try_as_double()
     }
 }
 
@@ -286,23 +328,153 @@ mod test {
         }
     }
 
+    proptest! {
+        #[test]
+        fn try_as_fixed32(value in any::<u32>()) {
+            {
+                // normal case
+                let v = WireValueRef::I32(WireI32(value));
+                prop_assert_eq!(Ok(value), v.try_as_fixed32());
+            }
+            {
+                // unexpected wire type
+                let v = WireValueRef::VarInt(WireVarInt::from_raw(value.into()));
+                prop_assert_eq!(
+                    Err(WireValueIntoError::UnexpectedType {
+                        expected: WireType::I32,
+                        actual: WireType::VarInt,
+                    }),
+                    v.try_as_fixed32()
+                );
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn try_as_sfixed32(value in any::<u32>()) {
+            {
+                // normal case
+                let v = WireValueRef::I32(WireI32(value));
+                prop_assert_eq!(Ok(value as i32), v.try_as_sfixed32());
+            }
+            {
+                // unexpected wire type
+                let v = WireValueRef::I64(WireI64(value.into()));
+                prop_assert_eq!(
+                    Err(WireValueIntoError::UnexpectedType {
+                        expected: WireType::I32,
+                        actual: WireType::I64,
+                    }),
+                    v.try_as_sfixed32()
+                );
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn try_as_float(value in any::<u32>()) {
+            {
+                // normal case
+                let v = WireValueRef::I32(WireI32(value));
+                prop_assert_eq!(Ok(value), v.try_as_float().map(f32::to_bits));
+            }
+            {
+                // unexpected wire type
+                let v = WireValueRef::SGroup;
+                prop_assert_eq!(
+                    Err(WireValueIntoError::UnexpectedType {
+                        expected: WireType::I32,
+                        actual: WireType::SGroup,
+                    }),
+                    v.try_as_float()
+                );
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn try_as_fixed64(value in any::<u64>()) {
+            {
+                // normal case
+                let v = WireValueRef::I64(WireI64(value));
+                prop_assert_eq!(Ok(value), v.try_as_fixed64());
+            }
+            {
+                // unexpected wire type
+                let v = WireValueRef::I32(WireI32(value as u32));
+                prop_assert_eq!(
+                    Err(WireValueIntoError::UnexpectedType {
+                        expected: WireType::I64,
+                        actual: WireType::I32,
+                    }),
+                    v.try_as_fixed64()
+                );
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn try_as_sfixed64(value in any::<u64>()) {
+            {
+                // normal case
+                let v = WireValueRef::I64(WireI64(value));
+                prop_assert_eq!(Ok(value as i64), v.try_as_sfixed64());
+            }
+            {
+                // unexpected wire type
+                let v = WireValueRef::VarInt(WireVarInt::from_raw(value));
+                prop_assert_eq!(
+                    Err(WireValueIntoError::UnexpectedType {
+                        expected: WireType::I64,
+                        actual: WireType::VarInt,
+                    }),
+                    v.try_as_sfixed64()
+                );
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn try_as_double(value in any::<u64>()) {
+            {
+                // normal case
+                let v = WireValueRef::I64(WireI64(value));
+                prop_assert_eq!(Ok(value), v.try_as_double().map(f64::to_bits));
+            }
+            {
+                // unexpected wire type
+                let v = WireValueRef::EGroup;
+                prop_assert_eq!(
+                    Err(WireValueIntoError::UnexpectedType {
+                        expected: WireType::I64,
+                        actual: WireType::EGroup,
+                    }),
+                    v.try_as_double()
+                );
+            }
+        }
+    }
+
     #[test]
-    fn fixed_size_unexpected_type() {
-        use WireValueIntoError::*;
-        let varint = WireValueRef::VarInt(WireVarInt::from_raw(0));
-        let i32_err = UnexpectedType {
-            expected: WireType::I32,
-            actual: WireType::VarInt,
-        };
-        let i64_err = UnexpectedType {
-            expected: WireType::I64,
-            actual: WireType::VarInt,
-        };
-        assert_eq!(Err(i32_err.clone()), varint.as_fixed32());
-        assert_eq!(Err(i32_err.clone()), varint.as_sfixed32());
-        assert_eq!(Err(i32_err.clone()), varint.as_float());
-        assert_eq!(Err(i64_err.clone()), varint.as_fixed64());
-        assert_eq!(Err(i64_err.clone()), varint.as_sfixed64());
-        assert_eq!(Err(i64_err.clone()), varint.as_double());
+    #[allow(deprecated)]
+    fn deprecated_fixed_size_conversions() {
+        let values = [
+            WireValueRef::VarInt(WireVarInt::from_raw(0)),
+            WireValueRef::I32(WireI32(0xC000_0000)),
+            WireValueRef::I64(WireI64(0xC000_0000_0000_0000)),
+        ];
+        for v in values {
+            assert_eq!(v.try_as_fixed32(), v.as_fixed32());
+            assert_eq!(v.try_as_sfixed32(), v.as_sfixed32());
+            assert_eq!(v.try_as_float(), v.as_float());
+            assert_eq!(v.try_as_fixed64(), v.as_fixed64());
+            assert_eq!(v.try_as_sfixed64(), v.as_sfixed64());
+            assert_eq!(v.try_as_double(), v.as_double());
+        }
     }
 }
