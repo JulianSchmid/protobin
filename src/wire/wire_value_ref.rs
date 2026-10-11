@@ -177,7 +177,7 @@ impl<'a> WireValueRef<'a> {
             Ok(v.as_fixed32())
         } else {
             Err(UnexpectedType {
-                expected: WireType::VarInt,
+                expected: WireType::I32,
                 actual: self.write_type(),
             })
         }
@@ -194,7 +194,7 @@ impl<'a> WireValueRef<'a> {
             Ok(v.as_sfixed32())
         } else {
             Err(UnexpectedType {
-                expected: WireType::VarInt,
+                expected: WireType::I32,
                 actual: self.write_type(),
             })
         }
@@ -211,7 +211,7 @@ impl<'a> WireValueRef<'a> {
             Ok(v.as_float())
         } else {
             Err(UnexpectedType {
-                expected: WireType::VarInt,
+                expected: WireType::I32,
                 actual: self.write_type(),
             })
         }
@@ -228,7 +228,7 @@ impl<'a> WireValueRef<'a> {
             Ok(v.as_fixed64())
         } else {
             Err(UnexpectedType {
-                expected: WireType::VarInt,
+                expected: WireType::I64,
                 actual: self.write_type(),
             })
         }
@@ -245,7 +245,7 @@ impl<'a> WireValueRef<'a> {
             Ok(v.as_sfixed64())
         } else {
             Err(UnexpectedType {
-                expected: WireType::VarInt,
+                expected: WireType::I64,
                 actual: self.write_type(),
             })
         }
@@ -262,9 +262,34 @@ impl<'a> WireValueRef<'a> {
             Ok(v.as_double())
         } else {
             Err(UnexpectedType {
-                expected: WireType::VarInt,
+                expected: WireType::I64,
                 actual: self.write_type(),
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn fixed_size_unexpected_type() {
+        use WireValueIntoError::*;
+        let varint = WireValueRef::VarInt(WireVarInt::from_raw(0));
+        let i32_err = UnexpectedType {
+            expected: WireType::I32,
+            actual: WireType::VarInt,
+        };
+        let i64_err = UnexpectedType {
+            expected: WireType::I64,
+            actual: WireType::VarInt,
+        };
+        assert_eq!(Err(i32_err.clone()), varint.as_fixed32());
+        assert_eq!(Err(i32_err.clone()), varint.as_sfixed32());
+        assert_eq!(Err(i32_err.clone()), varint.as_float());
+        assert_eq!(Err(i64_err.clone()), varint.as_fixed64());
+        assert_eq!(Err(i64_err.clone()), varint.as_sfixed64());
+        assert_eq!(Err(i64_err.clone()), varint.as_double());
     }
 }

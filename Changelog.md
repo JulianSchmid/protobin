@@ -12,6 +12,10 @@
 - **Breaking:** `DecodeError::Len` is now `DecodeError::Len { required, remaining }` and reports how many bytes were needed and how many were left.
 - Raised MSRV from `1.65` to `1.81`, so the error types can implement `core::error::Error`.
 
+### Fixed
+
+- The fixed-size conversions on `WireValueRef` (`as_fixed32`, `as_double`, ...) reported `WireType::VarInt` instead of `I32` / `I64` as the expected type in `WireValueIntoError::UnexpectedType`.
+
 ## 0.6.0
 
 ### Added
