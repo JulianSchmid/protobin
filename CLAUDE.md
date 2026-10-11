@@ -63,7 +63,7 @@ Issues and specs live as local markdown files under `.scratch/<feature>/`. See `
 
 ### Triage labels
 
-The default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
+The default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) plus `done` for finished tickets, recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
